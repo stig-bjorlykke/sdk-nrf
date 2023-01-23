@@ -60,6 +60,7 @@ enum pdn_event {
 	PDN_EVENT_DEACTIVATED,	/**< PDN connection deactivated */
 	PDN_EVENT_IPV6_UP,	/**< PDN has IPv6 connectivity */
 	PDN_EVENT_IPV6_DOWN,	/**< PDN has lost IPv6 connectivity */
+	PDN_EVENT_DETACHED,     /**< PDN connection detached */
 };
 
 /** @brief PDN authentication method */

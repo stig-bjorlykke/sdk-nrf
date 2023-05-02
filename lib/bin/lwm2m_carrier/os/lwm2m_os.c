@@ -12,6 +12,7 @@
 #include <zephyr/kernel.h>
 #include <string.h>
 #include <nrf_modem.h>
+#include <nrf_modem_at.h>
 #include <modem/lte_lc.h>
 #include <modem/pdn.h>
 #include <modem/nrf_modem_lib.h>
@@ -410,8 +411,78 @@ int lwm2m_os_at_init(lwm2m_os_at_handler_callback_t callback)
 	return 0;
 }
 
+static bool lwm2m_os_sim_ready;
+static struct k_work_delayable lwm2m_os_sim_ready_work;
+static char *lwm2m_os_delayed_notif;
+
+static void lwm2m_os_sim_ready_handler(struct k_work *work)
+{
+	ARG_UNUSED(work);
+
+	/* Some UICC will fail the OTA procedure if the AT command AT+CRSM is
+	 * used. A previously unused UICC may need the OTA to receive MSISDN.
+	 *
+	 * The carrier library will use the AT+CRSM command during startup,
+	 * and need the MSISDN for some operators. To avoid a failing OTA,
+	 * delay carrier library startup until a successful AT+CNUM.
+	 */
+	if (nrf_modem_at_printf("AT+CNUM") == 0) {
+		/* Notify the last received "+CEREG:" notification. */
+		if (at_handler_callback) {
+			at_handler_callback(lwm2m_os_delayed_notif);
+		}
+		k_free(lwm2m_os_delayed_notif);
+		lwm2m_os_delayed_notif = NULL;
+		lwm2m_os_sim_ready = true;
+	} else {
+		/* Try again in 1 minute. */
+		k_work_reschedule(&lwm2m_os_sim_ready_work, K_MINUTES(1));
+	}
+}
+
+static bool lwm2m_os_sim_ready_wait(const char *notif)
+{
+	static bool first_time = true;
+
+	if (lwm2m_os_sim_ready) {
+		return false;
+	}
+
+	if (first_time) {
+		int oper_id = 0;
+
+		/* Check only for specific operators. */
+		nrf_modem_at_scanf("AT%XOPERID", "%%XOPERID: %u", &oper_id);
+		if (oper_id != 1) {
+			lwm2m_os_sim_ready = true;
+			return false;
+		}
+
+		k_work_init_delayable(&lwm2m_os_sim_ready_work, lwm2m_os_sim_ready_handler);
+		first_time = false;
+	}
+
+	/* Only needed for network registration status. */
+	if (strncmp(notif, "+CEREG: ", 8) != 0) {
+		return false;
+	}
+
+	/* Store the last received "+CEREG: " notification. */
+	k_free(lwm2m_os_delayed_notif);
+	lwm2m_os_delayed_notif = k_malloc(strlen(notif) + 1);
+	memcpy(lwm2m_os_delayed_notif, notif, strlen(notif) + 1);
+
+	k_work_reschedule(&lwm2m_os_sim_ready_work, K_NO_WAIT);
+
+	return true;
+}
+
 static void lwm2m_os_at_handler(const char *notif)
 {
+	if (lwm2m_os_sim_ready_wait(notif)) {
+		return;
+	}
+
 	if (at_handler_callback != NULL) {
 		at_handler_callback(notif);
 	}

@@ -36,6 +36,7 @@
 #define DATA_MODEM_DYNAMIC  "roam"
 #define DATA_MODEM_STATIC   "dev"
 #define DATA_BATTERY	    "bat"
+#define DATA_FUEL_GAUGE	    "fg"
 #define DATA_TEMPERATURE    "temp"
 #define DATA_HUMIDITY	    "hum"
 #define DATA_PRESSURE       "atmp"
@@ -45,6 +46,13 @@
 #define DATA_CONFIG	    "cfg"
 #define DATA_VERSION	    "version"
 #define DATA_IMPACT	    "impact"
+
+#define DATA_FG_VOLTAGE "V"
+#define DATA_FG_CURRENT "I"
+#define DATA_FG_TEMPERATURE "T"
+#define DATA_FG_PERCENTAGE "SoC"
+#define DATA_FG_TTF "TTF"
+#define DATA_FG_TTE "TTE"
 
 #define DATA_MOVEMENT   "acc"
 #define DATA_MOVEMENT_X "x"

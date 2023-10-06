@@ -126,7 +126,7 @@ int lwm2m_codec_helpers_set_modem_static_data(struct cloud_data_modem_static *mo
  *  @retval 0 If successful, otherwise a negative value indicating the reason of failure.
  *  @return -ENODATA if the queued flag present in the input structure is false.
  */
-int lwm2m_codec_helpers_set_battery_data(struct cloud_data_battery *battery);
+int lwm2m_codec_helpers_set_battery_data(struct cloud_data_fuel_gauge *battery);
 
 /** @brief Set user interface (UI) data.
  *

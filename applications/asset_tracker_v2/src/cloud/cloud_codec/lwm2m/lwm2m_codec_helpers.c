@@ -794,7 +794,7 @@ int lwm2m_codec_helpers_set_modem_static_data(struct cloud_data_modem_static *mo
 	return 0;
 }
 
-int lwm2m_codec_helpers_set_battery_data(struct cloud_data_battery *battery)
+int lwm2m_codec_helpers_set_battery_data(struct cloud_data_fuel_gauge *battery)
 {
 	int err;
 

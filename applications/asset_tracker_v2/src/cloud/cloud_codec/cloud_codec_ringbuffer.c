@@ -85,8 +85,8 @@ void cloud_codec_populate_impact_buffer(
 	LOG_DBG("Entry: %d of %d in impact buffer filled", *head_impact_buf, buffer_count - 1);
 }
 
-void cloud_codec_populate_bat_buffer(struct cloud_data_battery *bat_buffer,
-				     struct cloud_data_battery *new_bat_data,
+void cloud_codec_populate_bat_buffer(struct cloud_data_fuel_gauge *bat_buffer,
+				     struct cloud_data_fuel_gauge *new_bat_data,
 				     int *head_bat_buf,
 				     size_t buffer_count)
 {

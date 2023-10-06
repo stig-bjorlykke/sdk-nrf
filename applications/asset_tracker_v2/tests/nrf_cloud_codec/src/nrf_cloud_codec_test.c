@@ -84,7 +84,7 @@ const static struct cloud_data_ui ui_data_example = {
 	"\"data\":\"50\""\
 "}]"
 
-const static struct cloud_data_battery bat_data_example = {
+const static struct cloud_data_fuel_gauge bat_data_example = {
 	.bat = 50,
 	.bat_ts = 1563968747123,
 	.queued = true,
@@ -408,7 +408,7 @@ void test_enc_data_empty(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = {0};
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {0};
+	struct cloud_data_fuel_gauge bat_buf = {0};
 
 	ret = cloud_codec_encode_data(&codec,
 				&gnss_buf,
@@ -431,7 +431,7 @@ void test_enc_batch_data_empty(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = {0};
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {0};
+	struct cloud_data_fuel_gauge bat_buf = {0};
 
 	ret = cloud_codec_encode_batch_data(&codec,
 				&gnss_buf,
@@ -456,7 +456,7 @@ void test_enc_batch_data_single_empty_element(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = {0};
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {0};
+	struct cloud_data_fuel_gauge bat_buf = {0};
 
 	ret = cloud_codec_encode_batch_data(&codec,
 				&gnss_buf,
@@ -480,7 +480,7 @@ void test_enc_batch_data_single_battery(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = {0};
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = bat_data_example;
+	struct cloud_data_fuel_gauge bat_buf = bat_data_example;
 
 	ret = cloud_codec_encode_batch_data(&codec,
 				&gnss_buf,
@@ -505,7 +505,7 @@ void test_enc_batch_data_single_battery_too_big(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = {0};
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {
+	struct cloud_data_fuel_gauge bat_buf = {
 		.bat = INT16_MAX,
 		.bat_ts = 1563968747123,
 		.queued = true,
@@ -532,7 +532,7 @@ void test_enc_batch_data_gnss(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = {0};
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {0};
+	struct cloud_data_fuel_gauge bat_buf = {0};
 
 	ret = cloud_codec_encode_batch_data(&codec,
 				&gnss_buf,
@@ -582,7 +582,7 @@ void test_enc_batch_data_modem_dynamic(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = modem_dyn_data_example;
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {0};
+	struct cloud_data_fuel_gauge bat_buf = {0};
 
 	ret = cloud_codec_encode_batch_data(&codec,
 				&gnss_buf,
@@ -609,7 +609,7 @@ void test_enc_batch_data_modem_dynamic_rsrp_too_small(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = modem_dyn_data_example;
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {0};
+	struct cloud_data_fuel_gauge bat_buf = {0};
 
 	modem_dyn_buf.rsrp = INT16_MIN;
 	ret = cloud_codec_encode_batch_data(&codec,
@@ -634,7 +634,7 @@ void test_enc_batch_data_sensor(void)
 	struct cloud_data_modem_dynamic modem_dyn_buf = {0};
 	struct cloud_data_ui ui_buf = {0};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {0};
+	struct cloud_data_fuel_gauge bat_buf = {0};
 
 	ret = cloud_codec_encode_batch_data(&codec,
 				&gnss_buf,
@@ -663,7 +663,7 @@ void test_enc_batch_data_ui_toobig(void)
 		.btn = 10,
 	};
 	struct cloud_data_impact impact_buf = {0};
-	struct cloud_data_battery bat_buf = {0};
+	struct cloud_data_fuel_gauge bat_buf = {0};
 
 	ret = cloud_codec_encode_batch_data(&codec,
 				&gnss_buf,

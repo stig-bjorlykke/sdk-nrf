@@ -270,7 +270,7 @@ int cloud_codec_encode_data(struct cloud_codec_data *output,
 			    struct cloud_data_modem_dynamic *modem_dyn_buf,
 			    struct cloud_data_ui *ui_buf,
 			    struct cloud_data_impact *impact_buf,
-			    struct cloud_data_battery *bat_buf)
+			    struct cloud_data_fuel_gauge *bat_buf)
 {
 	int err;
 	char *buffer;
@@ -473,7 +473,7 @@ int cloud_codec_encode_batch_data(struct cloud_codec_data *output,
 				  struct cloud_data_modem_dynamic *modem_dyn_buf,
 				  struct cloud_data_ui *ui_buf,
 				  struct cloud_data_impact *impact_buf,
-				  struct cloud_data_battery *bat_buf,
+				  struct cloud_data_fuel_gauge *bat_buf,
 				  size_t gnss_buf_count,
 				  size_t sensor_buf_count,
 				  size_t modem_stat_buf_count,

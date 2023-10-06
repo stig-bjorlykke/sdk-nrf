@@ -7,6 +7,7 @@
 #include <zephyr/kernel.h>
 #include <cJSON.h>
 #include <date_time.h>
+#include <math.h>
 
 #include "cloud_codec.h"
 #include "json_common.h"
@@ -964,7 +965,7 @@ int json_common_pgps_request_data_add(cJSON *parent, struct cloud_data_pgps_requ
 }
 
 int json_common_battery_data_add(cJSON *parent,
-				 struct cloud_data_battery *data,
+				 struct cloud_data_fuel_gauge *data,
 				 enum json_common_op_code op,
 				 const char *object_label,
 				 cJSON **parent_ref)
@@ -975,30 +976,67 @@ int json_common_battery_data_add(cJSON *parent,
 		return -ENODATA;
 	}
 
-	err = date_time_uptime_to_unix_time_ms(&data->bat_ts);
+	err = date_time_uptime_to_unix_time_ms(&data->ts);
 	if (err) {
 		LOG_ERR("date_time_uptime_to_unix_time_ms, error: %d", err);
 		return err;
 	}
 
 	cJSON *battery_obj = cJSON_CreateObject();
+	cJSON *battery_val_obj = cJSON_CreateObject();
 
-	if (battery_obj == NULL) {
+	if (battery_obj == NULL || battery_val_obj == NULL) {
 		err = -ENOMEM;
 		goto exit;
 	}
 
-	err = json_add_number(battery_obj, DATA_VALUE, data->bat);
+	err = json_add_number(battery_val_obj, DATA_FG_VOLTAGE, data->mV);
 	if (err) {
 		LOG_ERR("Encoding error: %d returned at %s:%d", err, __FILE__, __LINE__);
 		goto exit;
 	}
 
-	err = json_add_number(battery_obj, DATA_TIMESTAMP, data->bat_ts);
+	err = json_add_number(battery_val_obj, DATA_FG_PERCENTAGE, data->battery_level);
 	if (err) {
 		LOG_ERR("Encoding error: %d returned at %s:%d", err, __FILE__, __LINE__);
 		goto exit;
 	}
+
+	if (data->has_current){
+		err = json_add_number(battery_val_obj, DATA_FG_CURRENT, data->mA);
+		if (err) {
+			LOG_ERR("Encoding error: %d returned at %s:%d", err, __FILE__, __LINE__);
+			goto exit;
+		}
+	} else {
+		err = json_add_number(battery_val_obj, DATA_FG_CURRENT, NAN);
+		if (err) {
+			LOG_ERR("Encoding error: %d returned at %s:%d", err, __FILE__, __LINE__);
+			goto exit;
+		}
+	}
+
+	if (data->has_temp){
+		err = json_add_number(battery_val_obj, DATA_FG_TEMPERATURE, data->temp);
+		if (err) {
+			LOG_ERR("Encoding error: %d returned at %s:%d", err, __FILE__, __LINE__);
+			goto exit;
+		}
+	} else {
+		err = json_add_number(battery_val_obj, DATA_FG_TEMPERATURE, NAN);
+		if (err) {
+			LOG_ERR("Encoding error: %d returned at %s:%d", err, __FILE__, __LINE__);
+			goto exit;
+		}
+	}
+
+	err = json_add_number(battery_obj, DATA_TIMESTAMP, data->ts);
+	if (err) {
+		LOG_ERR("Encoding error: %d returned at %s:%d", err, __FILE__, __LINE__);
+		goto exit;
+	}
+
+	json_add_obj(battery_obj, DATA_VALUE, battery_val_obj);
 
 	err = op_code_handle(parent, op, object_label, battery_obj, parent_ref);
 	if (err) {
@@ -1293,8 +1331,8 @@ int json_common_batch_data_add(cJSON *parent, enum json_common_buffer_type type,
 		}
 			break;
 		case JSON_COMMON_BATTERY: {
-			struct cloud_data_battery *data =
-					(struct cloud_data_battery *)buf;
+			struct cloud_data_fuel_gauge *data =
+					(struct cloud_data_fuel_gauge *)buf;
 			err = json_common_battery_data_add(array_obj,
 							   &data[i],
 							   JSON_COMMON_ADD_DATA_TO_ARRAY,

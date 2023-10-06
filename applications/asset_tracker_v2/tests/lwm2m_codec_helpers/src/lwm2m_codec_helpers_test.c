@@ -637,7 +637,7 @@ void test_codec_helpers_set_modem_static_data(void)
 
 void test_codec_helpers_set_battery_data(void)
 {
-	struct cloud_data_battery battery = {
+	struct cloud_data_fuel_gauge battery = {
 		.bat = 3600,
 		.bat_ts = 1000,
 		.queued = true

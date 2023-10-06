@@ -104,6 +104,13 @@ struct sensor_module_batt_lvl_data {
 	int64_t timestamp;
 	/** Battery level in percentage. */
 	int battery_level;
+
+	bool has_temp;
+	bool has_current;
+	int temp;
+	int mA;
+
+	int mV;
 };
 
 /** @brief Sensor module event. */

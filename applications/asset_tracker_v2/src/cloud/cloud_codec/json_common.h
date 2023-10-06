@@ -259,7 +259,7 @@ int json_common_pgps_request_data_add(cJSON *parent, struct cloud_data_pgps_requ
  *         code is returned.
  */
 int json_common_battery_data_add(cJSON *parent,
-				 struct cloud_data_battery *data,
+				 struct cloud_data_fuel_gauge *data,
 				 enum json_common_op_code op,
 				 const char *object_label,
 				 cJSON **parent_ref);

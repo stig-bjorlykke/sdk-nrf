@@ -430,7 +430,7 @@ void test_enc_batch_data_gnss_no_array(void)
 
 void test_enc_batch_data_bat_no_data_obj(void)
 {
-	struct cloud_data_battery bat_buf = {
+	struct cloud_data_fuel_gauge bat_buf = {
 		.bat = 50,
 		.bat_ts = 1563968747123,
 		.queued = true,

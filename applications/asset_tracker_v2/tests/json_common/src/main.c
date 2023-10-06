@@ -84,7 +84,7 @@ static int encoded_output_check(cJSON *object, char *validation_string, int8_t q
 void test_encode_battery_data_object(void)
 {
 	int ret;
-	struct cloud_data_battery data = {
+	struct cloud_data_fuel_gauge data = {
 		.bat = 3600,
 		.bat_ts = 1000,
 		.queued = true
@@ -131,7 +131,7 @@ void test_encode_battery_data_object(void)
 void test_encode_battery_data_array(void)
 {
 	int ret;
-	struct cloud_data_battery data = {
+	struct cloud_data_fuel_gauge data = {
 		.bat = 3600,
 		.bat_ts = 1000,
 		.queued = true
@@ -902,7 +902,7 @@ void test_decode_configuration_data(void)
 void test_encode_batch_data_object(void)
 {
 	int ret;
-	struct cloud_data_battery battery[2] = {
+	struct cloud_data_fuel_gauge battery[2] = {
 		[0].bat = 3600,
 		[0].bat_ts = 1000,
 		[0].queued = true,

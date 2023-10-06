@@ -60,7 +60,7 @@ static struct cloud_data_gnss gnss_buf[CONFIG_DATA_GNSS_BUFFER_COUNT];
 static struct cloud_data_sensors sensors_buf[CONFIG_DATA_SENSOR_BUFFER_COUNT];
 static struct cloud_data_ui ui_buf[CONFIG_DATA_UI_BUFFER_COUNT];
 static struct cloud_data_impact impact_buf[CONFIG_DATA_IMPACT_BUFFER_COUNT];
-static struct cloud_data_battery bat_buf[CONFIG_DATA_BATTERY_BUFFER_COUNT];
+static struct cloud_data_fuel_gauge bat_buf[CONFIG_DATA_BATTERY_BUFFER_COUNT];
 static struct cloud_data_modem_dynamic modem_dyn_buf[CONFIG_DATA_MODEM_DYNAMIC_BUFFER_COUNT];
 static struct cloud_data_cloud_location cloud_location;
 
@@ -1145,9 +1145,15 @@ static void on_all_states(struct data_msg_data *msg)
 	}
 
 	if (IS_EVENT(msg, sensor, SENSOR_EVT_FUEL_GAUGE_READY)) {
-		struct cloud_data_battery new_battery_data = {
-			.bat = msg->module.sensor.data.bat.battery_level,
-			.bat_ts = msg->module.sensor.data.bat.timestamp,
+		struct cloud_data_fuel_gauge new_battery_data = {
+			.battery_level = msg->module.sensor.data.bat.battery_level,
+			.has_temp = msg->module.sensor.data.bat.has_temp,
+			.has_current = msg->module.sensor.data.bat.has_current,
+			.temp = msg->module.sensor.data.bat.temp,
+			.mA = msg->module.sensor.data.bat.mA,
+			.mV = msg->module.sensor.data.bat.mV,
+
+			.ts = msg->module.sensor.data.bat.timestamp,
 			.queued = true
 		};
 

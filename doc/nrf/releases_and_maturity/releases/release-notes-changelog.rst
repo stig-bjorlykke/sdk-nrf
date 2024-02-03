@@ -394,6 +394,7 @@ Cellular samples
       The ``rai_no_data`` option requires the socket to be connected and have a peer address set.
       This bug is caused by the non-secure datagram socket not being connected when using the ``connect`` subcommand.
     * The ``send`` subcommand to use the :c:func:`send` function for non-secure datagram sockets that are connected and have a peer address set.
+    * Allow TLS/DTLS security tag values up to 4294967295.
 
 * :ref:`nrf_cloud_multi_service` sample:
 

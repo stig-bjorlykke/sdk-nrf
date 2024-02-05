@@ -380,6 +380,7 @@ Cellular samples
     * Support for DNS query using the ``sock getaddrinfo`` command.
     * Support for PDN CID 0 in the ``-I`` argument for the ``sock connect`` command.
     * Support for listing interface addresses using the ``link ifaddrs`` command.
+    * Support for send MSG_WAITACK flag using the ``sock send`` command.
 
   * Removed the nRF7002 EK devicetree overlay file :file:`nrf91xxdk_with_nrf7002ek.overlay`, because UART1 is disabled through the shield configuration.
 

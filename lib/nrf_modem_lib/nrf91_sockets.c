@@ -228,6 +228,9 @@ static int z_to_nrf_optname(int z_in_level, int z_in_optname,
 		case SO_RAI_WAIT_MORE:
 			*nrf_out_optname = NRF_SO_RAI_WAIT_MORE;
 			break;
+		case SO_KEEPOPEN:
+			*nrf_out_optname = NRF_SO_KEEPOPEN;
+			break;
 		default:
 			retval = -1;
 			break;

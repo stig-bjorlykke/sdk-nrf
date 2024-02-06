@@ -425,6 +425,12 @@ static int setup_server(int *sock, struct sockaddr *bind_addr, socklen_t bind_ad
 		return -errno;
 	}
 
+	ret = setsockopt(*sock, SOL_SOCKET, SO_KEEPOPEN, &enable, sizeof(enable));
+	if (ret) {
+		LOG_ERR("Failed to set SO_KEEPOPEN %d", -errno);
+		return -errno;
+	}
+
 	ret = bind(*sock, bind_addr, bind_addrlen);
 	if (ret < 0) {
 		LOG_ERR("Failed to bind socket %d", -errno);

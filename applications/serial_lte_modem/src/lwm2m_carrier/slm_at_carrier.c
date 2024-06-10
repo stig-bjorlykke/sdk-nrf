@@ -149,6 +149,8 @@ int lwm2m_carrier_event_handler(const lwm2m_carrier_event_t *event)
 		if (fota_started) {
 			fota_started = false;
 			k_work_reschedule(&reconnect_work, K_MSEC(100));
+		} else if (IS_ENABLED(CONFIG_SLM_AUTO_CONNECT)) {
+			err = slm_util_at_printf("AT+CFUN=1");
 		} else {
 			/* AT+CFUN=1 to be issued. */
 			err = -1;
@@ -156,8 +158,12 @@ int lwm2m_carrier_event_handler(const lwm2m_carrier_event_t *event)
 		break;
 	case LWM2M_CARRIER_EVENT_LTE_LINK_DOWN:
 		LOG_DBG("LWM2M_CARRIER_EVENT_LTE_LINK_DOWN");
-		/* AT+CFUN=4 to be issued. */
-		err = -1;
+		if (IS_ENABLED(CONFIG_SLM_AUTO_CONNECT)) {
+			err = slm_util_at_printf("AT+CFUN=4");
+		} else {
+			/* AT+CFUN=4 to be issued. */
+			err = -1;
+		}
 		break;
 	case LWM2M_CARRIER_EVENT_LTE_POWER_OFF:
 		LOG_DBG("LWM2M_CARRIER_EVENT_LTE_POWER_OFF");
@@ -185,8 +191,13 @@ int lwm2m_carrier_event_handler(const lwm2m_carrier_event_t *event)
 		break;
 	case LWM2M_CARRIER_EVENT_REBOOT:
 		LOG_DBG("LWM2M_CARRIER_EVENT_REBOOT");
-		/* Return -1 to defer the reboot until the application decides to do so. */
-		err = -1;
+		if (IS_ENABLED(CONFIG_SLM_AUTO_CONNECT)) {
+			/* Return 0 to let carrier library do the reboot. */
+			err = 0;
+		} else {
+			/* Return -1 to defer the reboot until the application decides to do so. */
+			err = -1;
+		}
 		break;
 	case LWM2M_CARRIER_EVENT_MODEM_DOMAIN:
 		LOG_DBG("LWM2M_CARRIER_EVENT_MODEM_DOMAIN");

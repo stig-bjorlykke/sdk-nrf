@@ -147,6 +147,7 @@ Kconfig*                                  @tejlmand
 /lib/pcm_stream_channel_modifier/         @nrfconnect/ncs-audio
 /lib/sample_rate_converter/               @andvib @gWacey
 /lib/tone/                                @nrfconnect/ncs-audio
+/lib/uicc_lwm2m/                          @stig-bjorlykke
 /modules/                                 @tejlmand
 /modules/hostap/                          @krish2718 @jukkar @rado17 @sachinthegreen @rlubos
 /modules/mcuboot/                         @de-nordic @nordicjm
@@ -189,6 +190,7 @@ Kconfig*                                  @tejlmand
 /samples/cellular/modem_trace_flash/      @eivindj-nordic
 /samples/cellular/slm_shell/              @MarkusLassila @tomi-font
 /samples/cellular/sms/                    @trantanen @tokangas
+/samples/cellular/uicc_lwm2m/             @stig-bjorlykke
 /samples/openthread/                      @rlubos @edmont @canisLupus1313 @maciejbaczmanski
 /samples/nrf_profiler/                    @pdunaj
 /samples/peripheral/radio_test/           @KAGA164 @maje-emb
@@ -329,6 +331,7 @@ Kconfig*                                  @tejlmand
 /tests/lib/pcm_stream_channel_modifier/   @nrfconnect/ncs-audio
 /tests/lib/sample_rate_converter/         @andvib @gWacey
 /tests/lib/tone/                          @nrfconnect/ncs-audio
+/tests/lib/uicc_lwm2m/                    @stig-bjorlykke
 /tests/modules/lib/zcbor/                 @oyvindronningstad
 /tests/modules/mcuboot/direct_xip/        @hakonfam
 /tests/modules/mcuboot/external_flash/    @hakonfam @sigvartmh

@@ -51,5 +51,6 @@ rsource "fem_al/Kconfig"
 rsource "sample_rate_converter/Kconfig"
 rsource "boot_banner/Kconfig"
 rsource "pkcs15/Kconfig"
+rsource "sim_bootstrap/Kconfig"
 
 endmenu

@@ -1,0 +1,11 @@
+#
+# Copyright (c) 2024 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+config SIM_BOOTSTRAP
+	bool "LwM2M SIM boostrap support"
+	depends on NRF_PKCS15
+	help
+	  "Enable LwM2M SIM bootstrap library"

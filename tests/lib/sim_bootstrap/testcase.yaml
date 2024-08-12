@@ -1,0 +1,7 @@
+tests:
+  sim_bootstrap.unit_test:
+    sysbuild: true
+    tags: sim_bootstrap sysbuild
+    platform_allow: native_posix
+    integration_platforms:
+      - native_posix

@@ -1,0 +1,7 @@
+tests:
+  pkcs15.unit_test:
+    sysbuild: true
+    tags: pkcs15 sysbuild
+    platform_allow: native_posix
+    integration_platforms:
+      - native_posix

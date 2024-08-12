@@ -1,0 +1,10 @@
+#
+# Copyright (c) 2024 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+config NRF_PKCS15
+	bool "Nordic PKCS #15 support"
+	help
+	  "Enable PKCS #15 library"

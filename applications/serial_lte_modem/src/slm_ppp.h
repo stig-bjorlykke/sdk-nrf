@@ -9,9 +9,6 @@
 #include <modem/at_cmd_parser.h>
 #include <stdbool.h>
 
-/* Whether to forward CGEV notifications to the SLM UART. */
-extern bool slm_fwd_cgev_notifs;
-
 /** @retval 0 on success. */
 int slm_ppp_init(void);
 

@@ -354,7 +354,7 @@ ZTEST(lwm2m_client_utils_security, test_init_settings_fails)
 	setup();
 	/* First, test if settings fail */
 	settings_subsys_init_fake.return_val = -1;
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, -1, "wrong return value");
 }
 
@@ -366,7 +366,7 @@ ZTEST(lwm2m_client_utils_security, test_settings_reg_fails)
 	setup();
 
 	settings_register_fake.return_val = -2;
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(settings_register_fake.call_count, 1, "Settings not registered");
 	zassert_equal(rc, -2, "wrong return value");
 }
@@ -379,7 +379,7 @@ ZTEST(lwm2m_client_utils_security, test_settings_load_fails)
 	setup();
 
 	settings_load_subtree_fake.return_val = -3;
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(settings_load_subtree_fake.call_count, 1, "Settings not loaded");
 	zassert_equal(rc, -3, "wrong return value");
 }
@@ -393,7 +393,7 @@ ZTEST(lwm2m_client_utils_security, test_init_get_buf_fails)
 
 	lwm2m_get_res_buf_fake.custom_fake = NULL;
 	lwm2m_get_res_buf_fake.return_val = -4;
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, -4, "wrong return value");
 }
 
@@ -405,7 +405,7 @@ ZTEST(lwm2m_client_utils_security, test_init_security)
 	setup();
 
 	lwm2m_get_res_buf_fake.custom_fake = lwm2m_get_res_buf_custom_fake;
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, 0, "wrong return value");
 	zassert_equal(ctx.tls_tag, 100, "Bootstrap TLS tag not selected");
 	zassert_equal(lwm2m_delete_object_inst_fake.call_count, 1,
@@ -428,7 +428,7 @@ ZTEST(lwm2m_client_utils_security, test_need_bootstrap)
 	setup();
 	modem_key_mgmt_exists_fake.custom_fake = modem_key_mgmt_exists_custom_fake;
 
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, 0, "wrong return value");
 
 	zassert_equal(lwm2m_security_needs_bootstrap(), true, "Should need bootstrap");
@@ -492,7 +492,7 @@ ZTEST(lwm2m_client_utils_security, test_load_credentials_PSK)
 	int rc;
 
 	setup();
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, 0, "wrong return value");
 
 	zassert_not_null(ctx.load_credentials, "load_credentials callback not set");
@@ -519,7 +519,7 @@ ZTEST(lwm2m_client_utils_security, test_load_credentials_CERT_provisioned)
 	int rc;
 
 	setup();
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, 0, "wrong return value");
 
 	zassert_not_null(ctx.load_credentials, "load_credentials callback not set");
@@ -581,7 +581,7 @@ ZTEST(lwm2m_client_utils_security, test_load_from_flash)
 	lwm2m_get_res_buf_fake.custom_fake = lwm2m_get_res_buf_custom_fake;
 	modem_key_mgmt_exists_fake.custom_fake = modem_key_mgmt_exists_custom_fake;
 
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, 0, "wrong return value");
 
 	zassert_equal(settings_load_subtree_fake.call_count, 1, "Did not load settings");
@@ -620,7 +620,7 @@ ZTEST(lwm2m_client_utils_security, test_load_boostrap_from_flash)
 
 	settings_load_subtree_fake.custom_fake = test_bs_loading;
 
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, 0, "wrong return value");
 
 	zassert_equal(lwm2m_delete_object_inst_fake.call_count, 2,
@@ -668,7 +668,7 @@ ZTEST(lwm2m_client_utils_security, test_store_to_flash)
 	lwm2m_register_create_callback_fake.custom_fake = copy_sec_cb;
 	settings_save_one_fake.custom_fake = check_server_addr;
 
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, 0, "wrong return value");
 	zassert_not_null(sec_cb, "Did not set callback");
 
@@ -693,7 +693,7 @@ ZTEST(lwm2m_client_utils_security, test_remove_from_flash)
 
 	lwm2m_register_delete_callback_fake.custom_fake = copy_sec_cb;
 
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	zassert_equal(rc, 0, "wrong return value");
 	zassert_not_null(sec_cb, "Did not set callback");
 
@@ -722,7 +722,7 @@ ZTEST(lwm2m_client_utils_security, test_bs_X509)
 	modem_key_mgmt_exists_fake.custom_fake = modem_key_mgmt_exists_custom_fake;
 	lwm2m_get_res_buf_fake.custom_fake = lwm2m_get_res_buf_custom_fake;
 
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	lwm2m_get_res_buf_fake.custom_fake = get_cert_wrapper;
 	zassert_equal(rc, 0, "wrong return value");
 
@@ -757,7 +757,7 @@ ZTEST(lwm2m_client_utils_security, test_bs_URI)
 	modem_key_mgmt_exists_fake.custom_fake = modem_key_mgmt_exists_custom_fake;
 	lwm2m_get_res_buf_fake.custom_fake = lwm2m_get_res_buf_custom_fake;
 
-	rc = lwm2m_init_security(&ctx, MY_ENDPOINT, NULL);
+	rc = lwm2m_init_security(&ctx, MY_ENDPOINT);
 	lwm2m_get_res_buf_fake.custom_fake = get_uri_wrapper;
 	zassert_equal(rc, 0, "wrong return value");
 

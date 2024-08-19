@@ -196,7 +196,7 @@ static void cloud_lwm2m_init(void)
 		 imei_buf);
 
 	cloud_lwm2m_init_device(imei_buf);
-	lwm2m_init_security(&client, endpoint_name, NULL);
+	lwm2m_init_security(&client, endpoint_name);
 
 	if (sizeof(CONFIG_MOSH_LWM2M_PSK) > 1) {
 		/* Write hard-coded PSK key to the engine. First security instance is the right

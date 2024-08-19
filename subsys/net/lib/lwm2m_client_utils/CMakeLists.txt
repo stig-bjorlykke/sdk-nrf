@@ -25,6 +25,7 @@ zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_LOCATION_ASSISTANCE
 zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_RAI
 			     lwm2m/lwm2m_rai.c)
 zephyr_library_sources(lwm2m/lwm2m_lte_notification.c)
+zephyr_library_sources(lwm2m/lwm2m_modem_mode.c)
 zephyr_library_sources(lwm2m/lwm2m_utils_con_management.c)
 zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_ADV_FIRMWARE_UPDATE_OBJ_SUPPORT lwm2m/lwm2m_adv_firmware.c)
 zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_WIFI_AP_SCANNER location/location_wifi_ap_scanner.c)

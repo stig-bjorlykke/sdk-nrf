@@ -9,8 +9,10 @@
 #include <zephyr/sys/reboot.h>
 #include <zephyr/net/lwm2m.h>
 #include <net/lwm2m_client_utils.h>
-#include "lwm2m_engine.h"
 #include <zephyr/logging/log.h>
+
+#include "lwm2m_engine.h"
+
 LOG_MODULE_REGISTER(lwm2m_device, CONFIG_LWM2M_CLIENT_UTILS_LOG_LEVEL);
 
 #define REBOOT_DELAY K_SECONDS(1)
@@ -22,9 +24,10 @@ static K_WORK_DELAYABLE_DEFINE(reboot_work, reboot_work_handler);
 
 static void reboot_work_handler(struct k_work *work)
 {
+	const struct modem_mode_change *mm = lwm2m_modem_mode();
 	int rc;
 
-	rc = lte_lc_offline();
+	rc = mm->cb(LTE_LC_FUNC_MODE_POWER_OFF, mm->user_data);
 	if (rc) {
 		LOG_ERR("Failed to put LTE link in offline state (%d)", rc);
 	}

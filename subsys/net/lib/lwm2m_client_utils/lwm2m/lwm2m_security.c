@@ -42,39 +42,7 @@ enum security_mode {
 	SEC_MODE_NO_SEC = 3,
 };
 
-static struct modem_mode_change mm;
 static bool purge_sessions;
-
-int lwm2m_modem_mode_cb(enum lte_lc_func_mode new_mode, void *user_data)
-{
-	enum lte_lc_func_mode fmode;
-	int ret;
-
-	if (lte_lc_func_mode_get(&fmode)) {
-		LOG_ERR("Failed to read modem functional mode");
-		ret = -EFAULT;
-		return ret;
-	}
-
-	if (new_mode == LTE_LC_FUNC_MODE_NORMAL) {
-		/* I need to use the blocking call, because in next step
-		 * LwM2M engine would create socket and call connect()
-		 */
-		ret = lte_lc_connect();
-
-		if (ret) {
-			LOG_ERR("lte_lc_connect() failed %d", ret);
-		}
-		LOG_INF("Modem connection restored");
-	} else {
-		ret = lte_lc_func_mode_set(new_mode);
-		if (ret == 0) {
-			LOG_DBG("Modem set to requested state %d", new_mode);
-		}
-	}
-
-	return ret;
-}
 
 #if defined(CONFIG_LWM2M_DTLS_SUPPORT)
 
@@ -270,6 +238,8 @@ static int load_credentials_to_modem(struct lwm2m_ctx *ctx)
 	bool has_credentials;
 	int mode;
 
+	const struct modem_mode_change *mm = lwm2m_modem_mode();
+
 	if (IS_ENABLED(CONFIG_LWM2M_CLIENT_UTILS_RAI)) {
 		/* Inform RAI helper, that we are starting a new session, so it disables
 		 * RAI indications until we are properly registered again.
@@ -311,7 +281,7 @@ static int load_credentials_to_modem(struct lwm2m_ctx *ctx)
 
 	LOG_INF("Need to write credentials, requesting LTE and GNSS offline...");
 
-	while ((ret = mm.cb(LTE_LC_FUNC_MODE_OFFLINE, mm.user_data)) != 0) {
+	while ((ret = mm->cb(LTE_LC_FUNC_MODE_OFFLINE, mm->user_data)) != 0) {
 		if (ret < 0) {
 			return ret; /* Error */
 		}
@@ -357,7 +327,7 @@ static int load_credentials_to_modem(struct lwm2m_ctx *ctx)
 out:
 	LOG_INF("Requesting LTE and GNSS online");
 
-	while ((ret = mm.cb(LTE_LC_FUNC_MODE_NORMAL, mm.user_data)) != 0) {
+	while ((ret = mm->cb(LTE_LC_FUNC_MODE_NORMAL, mm->user_data)) != 0) {
 		if (ret < 0) {
 			return ret; /* Error */
 		}
@@ -725,7 +695,7 @@ static int set_socketoptions(struct lwm2m_ctx *ctx)
 	return lwm2m_set_default_sockopt(ctx);
 }
 
-int lwm2m_init_security(struct lwm2m_ctx *ctx, char *endpoint, struct modem_mode_change *mmode)
+int lwm2m_init_security(struct lwm2m_ctx *ctx, char *endpoint)
 {
 #if defined(CONFIG_LWM2M_DTLS_SUPPORT)
 
@@ -733,15 +703,6 @@ int lwm2m_init_security(struct lwm2m_ctx *ctx, char *endpoint, struct modem_mode
 	bootstrap_settings_loaded_inst = -1;
 	loading_in_progress = false;
 	purge_sessions = true;
-
-	/* Restore the default if not a callback function */
-	if (!mmode) {
-		mm.cb = lwm2m_modem_mode_cb;
-		mm.user_data = NULL;
-	} else {
-		mm.cb = mmode->cb;
-		mm.user_data = mmode->user_data;
-	}
 
 	ctx->tls_tag = IS_ENABLED(CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP) ?
 			       CONFIG_LWM2M_CLIENT_UTILS_BOOTSTRAP_TLS_TAG :

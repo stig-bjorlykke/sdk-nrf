@@ -227,8 +227,8 @@ static int device_reboot_cb(uint16_t obj_inst_id, uint8_t *args, uint16_t args_l
 
 /* Callback handler triggered when the modem should be put in a certain functional mode.
  * Handler is called pre provisioning of DTLS credentials when the modem should be put in
- * offline mode, and when the modem should return to normal mode after
- * provisioning has been carried out.
+ * offline mode, and when the modem should return to normal mode after provisioning has been
+ * carried out. Handler is also called when server request a device reboot.
  */
 static int modem_mode_request_cb(enum lte_lc_func_mode new_mode, void *user_data)
 {
@@ -345,6 +345,8 @@ int cloud_wrap_init(cloud_wrap_evt_handler_t event_handler)
 		.user_data = NULL
 	};
 
+	lwm2m_modem_mode_init(&mode_change);
+
 #if !defined(CONFIG_CLOUD_CLIENT_ID_USE_CUSTOM)
 	char hw_id_buf[HW_ID_LEN];
 
@@ -401,7 +403,7 @@ int cloud_wrap_init(cloud_wrap_evt_handler_t event_handler)
 		LOG_DBG("DTLS session cache flushed.");
 	}
 
-	err = lwm2m_init_security(&client, endpoint_name, &mode_change);
+	err = lwm2m_init_security(&client, endpoint_name);
 	if (err) {
 		LOG_ERR("lwm2m_init_security, error: %d", err);
 		return err;

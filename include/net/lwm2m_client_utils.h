@@ -56,6 +56,20 @@ struct modem_mode_change {
 };
 
 /**
+ * @brief Get modem mode change settings.
+ *
+ * @return struct modem_made_change
+ */
+const struct modem_mode_change *lwm2m_modem_mode(void);
+
+/**
+ * @brief Initialize custom modem_mode_change callback.
+ *
+ * @param mmode New modem mode change callback.
+ */
+void lwm2m_modem_mode_init(struct modem_mode_change *mmode);
+
+/**
  * @brief Initialize Security object support for nrf91
  *
  * This wrapper will install hooks that allows device to do a
@@ -67,7 +81,7 @@ struct modem_mode_change {
  *       only be called after the settings backend (Flash or FS)
  *       is ready.
  */
-int lwm2m_init_security(struct lwm2m_ctx *ctx, char *endpoint, struct modem_mode_change *mmode);
+int lwm2m_init_security(struct lwm2m_ctx *ctx, char *endpoint);
 
 /**
  * @brief Set security object to PSK mode.

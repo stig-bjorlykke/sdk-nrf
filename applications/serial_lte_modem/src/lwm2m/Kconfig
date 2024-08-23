@@ -1,0 +1,37 @@
+#
+# Copyright (c) 2024 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+config SLM_LWM2M
+	bool "LwM2M support in SLM"
+	depends on LWM2M
+
+if SLM_LWM2M
+
+config SLM_LWM2M_AUTO_STARTUP
+	bool "Enable automatic startup on boot"
+	help
+	  Enable automatic startup of the LwM2M client on device boot. If this configuration is
+	  disabled, automatic startup is controlled through a dedicated AT command.
+
+config SLM_LWM2M_PSK
+	string "LwM2M pre-shared key"
+	help
+	  Pre-shared key must be identical to the PSK registered with the device on the LwM2M server.
+	  Use the hexadecimal representation.
+
+choice SLM_LWM2M_ENDPOINT_CLIENT_NAME_CHOICE
+        prompt "Endpoint Client Name format"
+        default SLM_LWM2M_ENDPOINT_CLIENT_NAME_IMEI
+
+config SLM_LWM2M_ENDPOINT_CLIENT_NAME_IMEI
+        bool "urn:imei:<imei>"
+
+config SLM_LWM2M_ENDPOINT_CLIENT_NAME_ICCID
+        bool "<iccid>"
+
+endchoice
+
+endif # SLM_LWM2M

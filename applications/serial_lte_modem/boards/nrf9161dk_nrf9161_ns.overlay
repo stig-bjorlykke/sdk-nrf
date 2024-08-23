@@ -15,6 +15,12 @@
 	hw-flow-control;
 };
 
+&uart1 {
+	status = "okay";
+	current-speed = <1000000>;
+	hw-flow-control;
+};
+
 &uart2 {
 	compatible = "nordic,nrf-uarte";
 	current-speed = <115200>;

@@ -113,18 +113,6 @@ static void modem_data_update(struct k_work *work)
 #endif
 }
 
-/**@brief Callback handler for LTE RSRP data. */
-static void modem_signal_handler(char rsrp_value)
-{
-	/* Only send a value from a valid range (0 - 97). */
-	if (rsrp_value > 97) {
-		return;
-	}
-
-	modem_rsrp = (int8_t)RSRP_IDX_TO_DBM(rsrp_value);
-	k_work_submit(&modem_signal_work);
-}
-
 static void modem_signal_update(struct k_work *work)
 {
 	static uint32_t timestamp_prev;
@@ -137,6 +125,19 @@ static void modem_signal_update(struct k_work *work)
 
 	lwm2m_set_s16(&LWM2M_OBJ(4, 0, 2), modem_rsrp);
 	timestamp_prev = k_uptime_get_32();
+}
+
+#ifdef CONFIG_LTE_LINK_CONTROL
+/**@brief Callback handler for LTE RSRP data. */
+static void modem_signal_handler(char rsrp_value)
+{
+	/* Only send a value from a valid range (0 - 97). */
+	if (rsrp_value > 97) {
+		return;
+	}
+
+	modem_rsrp = (int8_t)RSRP_IDX_TO_DBM(rsrp_value);
+	k_work_submit(&modem_signal_work);
 }
 
 static void lwm2m_update_connmon_cell(void)
@@ -177,6 +178,7 @@ static void connmon_lte_notify_handler(const struct lte_lc_evt *const evt)
 	case LTE_LC_EVT_LTE_MODE_UPDATE:
 		lwm2m_update_connmon_mode(evt->lte_mode);
 		break;
+
 	case LTE_LC_EVT_NW_REG_STATUS:
 		connected = ((evt->nw_reg_status == LTE_LC_NW_REG_REGISTERED_HOME) ||
 			    (evt->nw_reg_status == LTE_LC_NW_REG_REGISTERED_ROAMING));
@@ -194,6 +196,7 @@ static void connmon_lte_notify_handler(const struct lte_lc_evt *const evt)
 		break;
 	}
 }
+#endif
 
 static int lwm2m_init_connmon_cb(void)
 {
@@ -215,7 +218,9 @@ static int lwm2m_init_connmon_cb(void)
 	}
 	connmon_data_init();
 
+#ifdef CONFIG_LTE_LINK_CONTROL
 	lte_lc_register_handler(connmon_lte_notify_handler);
+#endif
 	return 0;
 }
 

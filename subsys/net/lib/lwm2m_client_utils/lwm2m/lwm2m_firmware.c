@@ -347,9 +347,9 @@ static void reboot_work_handler(void)
 		if (dev_res && dev_res->execute_cb) {
 			dev_res->execute_cb(0, &reboot_src, 1);
 		} else {
+			LOG_WRN("Rebooting");
 			LOG_PANIC();
 			sys_reboot(SYS_REBOOT_COLD);
-			LOG_WRN("Rebooting");
 		}
 	}
 }
@@ -818,14 +818,13 @@ static void fota_download_callback(const struct fota_download_evt *evt)
 			target_image_type_store(ongoing_obj_id, dfu_image_type);
 		}
 		return;
-	default:
-		return;
 
 	/* Following cases mark end of FOTA download */
 	case FOTA_DOWNLOAD_EVT_CANCELLED:
 		LOG_ERR("FOTA_DOWNLOAD_EVT_CANCELLED");
 		set_result(ongoing_obj_id, RESULT_CONNECTION_LOST);
 		break;
+
 	case FOTA_DOWNLOAD_EVT_ERROR:
 		LOG_ERR("FOTA_DOWNLOAD_EVT_ERROR");
 
@@ -859,6 +858,9 @@ static void fota_download_callback(const struct fota_download_evt *evt)
 		target_image_type_store(ongoing_obj_id, dfu_image_type);
 		set_state(ongoing_obj_id, STATE_DOWNLOADED);
 		break;
+
+	default:
+		return;
 	}
 }
 

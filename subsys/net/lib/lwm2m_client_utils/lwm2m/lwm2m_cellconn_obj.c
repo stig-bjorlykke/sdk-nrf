@@ -172,7 +172,7 @@ static struct k_work radio_period_work;
 static struct k_work offline_work;
 static char rptau[9] = CONFIG_LTE_PSM_REQ_RPTAU;
 static char rat[9] = CONFIG_LTE_PSM_REQ_RAT;
-static enum lte_lc_lte_mode lte_mode = LTE_LC_LTE_MODE_NONE;
+static enum lte_lc_lte_mode lte_mode = LTE_LC_LTE_MODE_LTEM;
 
 static void radio_period_update(struct k_work *work)
 {

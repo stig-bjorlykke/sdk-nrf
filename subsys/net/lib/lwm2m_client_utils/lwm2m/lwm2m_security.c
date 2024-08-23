@@ -297,10 +297,12 @@ static int load_credentials_to_modem(struct lwm2m_ctx *ctx)
 	 * assume that the ones in modem are correct.
 	 * Don't overwrite bootstrap keys with hardcoded keys.
 	 */
-	if (exist &&
-	    (have_permanently_stored_keys ||
-	     ctx->tls_tag == CONFIG_LWM2M_CLIENT_UTILS_BOOTSTRAP_TLS_TAG || !has_credentials)) {
+	if (exist && (have_permanently_stored_keys || ctx->bootstrap_mode || !has_credentials)) {
 		LOG_DBG("Existing credentials found on modem");
+		if (ctx->bootstrap_mode) {
+			/* Enable writing credentials after bootstrap */
+			have_permanently_stored_keys = false;
+		}
 		return 0;
 	}
 

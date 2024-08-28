@@ -16,6 +16,8 @@ zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_CONN_STAT_OBJ_SUPPORT
 			     lwm2m/lwm2m_connstat_obj.c)
 zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_CELL_CONN_OBJ_SUPPORT
 			     lwm2m/lwm2m_cellconn_obj.c)
+zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_BINARYAPPDATA_OBJ_SUPPORT
+			     lwm2m/lwm2m_binaryappdata.c)
 zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_GROUND_FIX_OBJ_SUPPORT
 			     lwm2m/ground_fix_obj.c)
 zephyr_library_sources_ifdef(CONFIG_LWM2M_CLIENT_UTILS_GNSS_ASSIST_OBJ_SUPPORT

@@ -13,7 +13,7 @@
 static int counter_int;
 static int counter_short;
 
-static int resp_cb(nrf_modem_at_resp_handler_t cb, const char *fmt, char *p)
+static int resp_cb(nrf_modem_at_resp_handler_t cb, const char *fmt, va_list ap)
 {
 	cb("my_resp");
 

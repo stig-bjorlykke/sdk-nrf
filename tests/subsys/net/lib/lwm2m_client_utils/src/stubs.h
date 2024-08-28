@@ -85,6 +85,8 @@ DECLARE_FAKE_VALUE_FUNC(int, lwm2m_set_u32, const struct lwm2m_obj_path *, uint3
 DECLARE_FAKE_VALUE_FUNC(int, lwm2m_set_s16, const struct lwm2m_obj_path *, int16_t);
 DECLARE_FAKE_VALUE_FUNC(int, lwm2m_set_s32, const struct lwm2m_obj_path *, int32_t);
 DECLARE_FAKE_VALUE_FUNC(int, modem_info_rsrp_register, rsrp_cb_t);
+DECLARE_FAKE_VALUE_FUNC(int, lwm2m_register_read_callback, const struct lwm2m_obj_path *,
+			lwm2m_engine_get_data_cb_t);
 DECLARE_FAKE_VALUE_FUNC(int, lwm2m_register_exec_callback, const struct lwm2m_obj_path *,
 			lwm2m_engine_execute_cb_t);
 DECLARE_FAKE_VALUE_FUNC(int, lwm2m_set_default_sockopt, struct lwm2m_ctx *);
@@ -101,6 +103,8 @@ DECLARE_FAKE_VALUE_FUNC(int, at_parser_int32_get, struct at_parser *, size_t, in
 DECLARE_FAKE_VALUE_FUNC(int, at_parser_uint16_get, struct at_parser *, size_t, uint16_t *);
 DECLARE_FAKE_VALUE_FUNC_VARARG(int, nrf_modem_at_cmd_async, nrf_modem_at_resp_handler_t,
 			       const char *, ...);
+DECLARE_FAKE_VALUE_FUNC_VARARG(int, nrf_modem_at_printf, const char *, ...);
+DECLARE_FAKE_VALUE_FUNC_VARARG(int, nrf_modem_at_scanf, const char *, const char *, ...);
 DECLARE_FAKE_VALUE_FUNC(int, z_impl_zsock_setsockopt, int, int, int, const void *, socklen_t);
 DECLARE_FAKE_VOID_FUNC(lwm2m_utils_rai_event_cb, struct lwm2m_ctx *, enum lwm2m_rd_client_event *);
 DECLARE_FAKE_VALUE_FUNC(uint8_t, lwm2m_firmware_get_update_state_inst, uint16_t);
@@ -129,6 +133,7 @@ DECLARE_FAKE_VOID_FUNC(boot_write_img_confirmed);
 	FUNC(lwm2m_register_delete_callback)            \
 	FUNC(lwm2m_register_create_callback)            \
 	FUNC(lwm2m_register_post_write_callback)        \
+	FUNC(lwm2m_register_read_callback)              \
 	FUNC(lwm2m_register_exec_callback)              \
 	FUNC(lwm2m_create_object_inst)                  \
 	FUNC(lwm2m_create_res_inst)                     \
@@ -180,6 +185,8 @@ DECLARE_FAKE_VOID_FUNC(boot_write_img_confirmed);
 	FUNC(at_parser_int32_get)                       \
 	FUNC(at_parser_uint16_get)                      \
 	FUNC(nrf_modem_at_cmd_async)                    \
+	FUNC(nrf_modem_at_printf)                       \
+	FUNC(nrf_modem_at_scanf)                        \
 	FUNC(z_impl_zsock_setsockopt)                   \
 	FUNC(lwm2m_utils_rai_event_cb)                  \
 	FUNC(lwm2m_firmware_get_update_state_inst)	\

@@ -90,6 +90,8 @@ DEFINE_FAKE_VALUE_FUNC(int, lwm2m_set_res_buf, const struct lwm2m_obj_path *, vo
 DEFINE_FAKE_VALUE_FUNC(int, lwm2m_set_u32, const struct lwm2m_obj_path *, uint32_t);
 DEFINE_FAKE_VALUE_FUNC(int, lwm2m_set_s16, const struct lwm2m_obj_path *, int16_t);
 DEFINE_FAKE_VALUE_FUNC(int, lwm2m_set_s32, const struct lwm2m_obj_path *, int32_t);
+DEFINE_FAKE_VALUE_FUNC(int, lwm2m_register_read_callback, const struct lwm2m_obj_path *,
+		       lwm2m_engine_get_data_cb_t);
 DEFINE_FAKE_VALUE_FUNC(int, lwm2m_register_exec_callback, const struct lwm2m_obj_path *,
 		       lwm2m_engine_execute_cb_t);
 DEFINE_FAKE_VALUE_FUNC(int, lwm2m_set_default_sockopt, struct lwm2m_ctx *);
@@ -107,6 +109,8 @@ DEFINE_FAKE_VALUE_FUNC(int, at_parser_int32_get, struct at_parser *, size_t, int
 DEFINE_FAKE_VALUE_FUNC(int, at_parser_uint16_get, struct at_parser *, size_t, uint16_t *);
 DEFINE_FAKE_VALUE_FUNC_VARARG(int, nrf_modem_at_cmd_async, nrf_modem_at_resp_handler_t,
 			      const char *, ...);
+DEFINE_FAKE_VALUE_FUNC_VARARG(int, nrf_modem_at_printf, const char *, ...);
+DEFINE_FAKE_VALUE_FUNC_VARARG(int, nrf_modem_at_scanf, const char *, const char *, ...);
 DEFINE_FAKE_VALUE_FUNC(int, z_impl_zsock_setsockopt, int, int, int, const void *, socklen_t);
 DEFINE_FAKE_VOID_FUNC(lwm2m_utils_rai_event_cb, struct lwm2m_ctx *, enum lwm2m_rd_client_event *);
 DEFINE_FAKE_VALUE_FUNC(uint8_t, lwm2m_firmware_get_update_state_inst, uint16_t);

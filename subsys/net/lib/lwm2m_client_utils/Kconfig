@@ -72,6 +72,10 @@ config LWM2M_CLIENT_UTILS_LOCATION_OBJ_SUPPORT
 	default y
 	select LWM2M_LOCATION_OBJ_SUPPORT
 
+config LWM2M_CLIENT_UTILS_CONN_STAT_OBJ_SUPPORT
+	bool "Connectivity Statistics object support"
+	depends on !LWM2M_CARRIER
+
 config LWM2M_CLIENT_UTILS_FIRMWARE_UPDATE_OBJ_SUPPORT
 	bool "Firmware Update object support"
 	default y

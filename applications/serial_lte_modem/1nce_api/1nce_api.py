@@ -10,7 +10,7 @@ import sys
 from base64 import b64decode, b64encode
 from time import sleep
 from tlv import TLV
-#from hexdump import hexdump
+from hexdump import hexdump
 
 if '--device' in sys.argv:
     # Get device ID from command line
@@ -90,7 +90,7 @@ def provision(psk="6E6F72646963736563726574"):
 
     print("Device " + post_res['deviceId'] + " provisioned")
 
-def do(action, resource, value=None):
+def do(action, resource, payload_dump=0, value=None):
     """Perform an action on a resource"""
     with open('access_token.txt', 'r') as file:
         access_token = file.read().rstrip()
@@ -126,11 +126,16 @@ def do(action, resource, value=None):
                 print("Request failed: " + get_res['status'])
                 break
 
+    if payload_dump == 1 or payload_dump == 3:
+        print(json.dumps(get_res, indent=2))
+
     if 'resultData' in get_res:
         if 'payload' in get_res['resultData'] and get_res['resultData']['payload']:
             content = b64decode(get_res['resultData']['payload'])
-            # print(hexdump(content))
-            print(TLV.parse(content))
+            if payload_dump == 2 or payload_dump == 3:
+                print(hexdump(content))
+            else:
+                print(TLV.parse(content))
         else:
             print(json.dumps(get_res['resultData'], indent=2))
     else:
@@ -144,22 +149,22 @@ def fota_file(index=0):
         fota = file.read()
     return b64encode(fota).decode("utf-8")
 
-def read(resource):
+def read(resource, payload_dump=0):
     """Read a resource"""
-    do("read", resource)
+    do("read", resource, payload_dump)
 
-def write(resource, value):
+def write(resource, value, payload_dump=0):
     """Write a value to a resource"""
-    do("write", resource, value)
+    do("write", resource, payload_dump, value)
 
-def exec(resource):
+def exec(resource, payload_dump=0):
     """Execute a resource"""
-    do("execute", resource)
+    do("execute", resource, payload_dump)
 
-def observe_start(resource):
+def observe_start(resource, payload_dump=0):
     """Start observing a resource"""
-    do("observe-start", resource)
+    do("observe-start", resource, payload_dump)
 
-def observe_stop(resource):
+def observe_stop(resource, payload_dump=0):
     """Stop observing a resource"""
-    do("observe-stop", resource)
+    do("observe-stop", resource, payload_dump)

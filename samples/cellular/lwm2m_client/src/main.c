@@ -10,10 +10,12 @@
 #include <stdio.h>
 #include <zephyr/net/lwm2m.h>
 #include <modem/nrf_modem_lib.h>
+#include <modem/modem_key_mgmt.h>
 #include <net/lwm2m_client_utils.h>
 #include <app_event_manager.h>
 #include <net/lwm2m_client_utils_location.h>
 #include <date_time.h>
+#include <net/nrf_provisioning.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(app_lwm2m_client, CONFIG_APP_LOG_LEVEL);
@@ -43,7 +45,15 @@ LOG_MODULE_REGISTER(app_lwm2m_client, CONFIG_APP_LOG_LEVEL);
 #define APP_BANNER "Run LWM2M client"
 
 #define IMEI_LEN 15
+#define ICCID_LEN 20
+
+#if defined(CONFIG_APP_ENDPOINT_CLIENT_NAME_SEC_IDENTITY)
+#define ENDPOINT_NAME_LEN (CONFIG_LWM2M_SECURITY_KEY_SIZE + sizeof(CONFIG_APP_ENDPOINT_PREFIX) + 1)
+#elif defined(CONFIG_APP_ENDPOINT_CLIENT_NAME_ICCID)
+#define ENDPOINT_NAME_LEN (ICCID_LEN + sizeof(CONFIG_APP_ENDPOINT_PREFIX) + 1)
+#else
 #define ENDPOINT_NAME_LEN (IMEI_LEN + sizeof(CONFIG_APP_ENDPOINT_PREFIX) + 1)
+#endif
 
 #define LWM2M_SECURITY_PRE_SHARED_KEY 0
 #define LWM2M_SECURITY_RAW_PUBLIC_KEY 1
@@ -71,6 +81,7 @@ static struct lwm2m_ctx client = {0};
 static bool reconnect;
 static K_SEM_DEFINE(state_mutex, 0, 1);
 static K_MUTEX_DEFINE(lte_mutex);
+static K_SEM_DEFINE(provisioning_mutex, 0, 1);
 static bool modem_connected_to_network;
 /* Enable session lifetime check for initial boot */
 static bool update_session_lifetime = true;
@@ -558,6 +569,69 @@ static void suspend_lwm2m_engine(void)
 	}
 }
 
+#if defined(CONFIG_NRF_PROVISIONING)
+static int modem_mode_cb(enum lte_lc_func_mode new_mode, void *user_data)
+{
+	enum lte_lc_func_mode fmode;
+	int ret;
+
+	ARG_UNUSED(user_data);
+
+	if (lte_lc_func_mode_get(&fmode)) {
+		LOG_ERR("Failed to read modem functional mode");
+		ret = -EFAULT;
+		return ret;
+	}
+
+	if (fmode == new_mode) {
+		ret = fmode;
+	} else if (new_mode == LTE_LC_FUNC_MODE_NORMAL) {
+		/* Use the blocking call, because in next step
+		 * the service will create a socket and call connect()
+		 */
+		ret = lte_lc_connect();
+
+		if (ret) {
+			LOG_ERR("lte_lc_connect() failed %d", ret);
+		}
+		LOG_INF("Modem connection restored");
+		ret = fmode;
+	} else {
+		ret = lte_lc_func_mode_set(new_mode);
+		if (ret == 0) {
+			LOG_DBG("Modem set to requested state %d", new_mode);
+			ret = fmode;
+		}
+	}
+
+	return ret;
+}
+
+static void device_mode_cb(enum nrf_provisioning_event event, void *user_data)
+{
+	ARG_UNUSED(user_data);
+
+	switch (event) {
+	case NRF_PROVISIONING_EVENT_START:
+		LOG_INF("Provisioning started");
+		break;
+	case NRF_PROVISIONING_EVENT_STOP:
+		LOG_INF("Provisioning stopped");
+		k_sem_give(&provisioning_mutex);
+		break;
+	case NRF_PROVISIONING_EVENT_DONE:
+		LOG_INF("Provisioning done");
+		break;
+	default:
+		LOG_ERR("Unknown event");
+		break;
+	}
+}
+
+static struct nrf_provisioning_mm_change mmode = { .cb = modem_mode_cb };
+static struct nrf_provisioning_dm_change dmode = { .cb = device_mode_cb };
+#endif
+
 int main(void)
 {
 	int ret;
@@ -587,6 +661,15 @@ int main(void)
 
 	lte_lc_register_handler(lte_notify_handler);
 
+	if (IS_ENABLED(CONFIG_APP_ENDPOINT_CLIENT_NAME_ICCID)) {
+		/* Turn on SIM to read ICCID. */
+		ret = lte_lc_func_mode_set(LTE_LC_FUNC_MODE_ACTIVATE_UICC);
+		if (ret < 0) {
+			LOG_ERR("Failed to set modem mode (%d)", ret);
+			return ret;
+		}
+	}
+
 	ret = modem_info_init();
 	if (ret < 0) {
 		LOG_ERR("Unable to init modem_info (%d)", ret);
@@ -600,10 +683,41 @@ int main(void)
 		return 0;
 	}
 
-	/* use IMEI as unique endpoint name */
-	snprintk(endpoint_name, sizeof(endpoint_name), "%s%.*s", CONFIG_APP_ENDPOINT_PREFIX,
-		 IMEI_LEN, imei_buf);
-	LOG_INF("endpoint: %s", (char *)endpoint_name);
+	if (IS_ENABLED(CONFIG_APP_ENDPOINT_CLIENT_NAME_ICCID)) {
+		uint8_t iccid_buf[ICCID_LEN + 1];
+
+		/* query ICCID. */
+		ret = modem_info_string_get(MODEM_INFO_ICCID, iccid_buf, sizeof(iccid_buf));
+		if (ret < 0) {
+			LOG_ERR("Unable to get ICCID");
+			return ret;
+		}
+
+		/* use ICCID as unique endpoint name */
+		iccid_buf[strlen(iccid_buf) - 1] = '\0'; /* Remove checksum digit. */
+		snprintk(endpoint_name, sizeof(endpoint_name), "%s%s",
+			 CONFIG_APP_ENDPOINT_PREFIX, iccid_buf);
+	} else if (IS_ENABLED(CONFIG_APP_ENDPOINT_CLIENT_NAME_IMEI)) {
+		/* use IMEI as unique endpoint name */
+		snprintk(endpoint_name, sizeof(endpoint_name), "%s%.*s",
+			 CONFIG_APP_ENDPOINT_PREFIX, IMEI_LEN, imei_buf);
+	}
+
+#if defined(CONFIG_NRF_PROVISIONING)
+	if (!IS_ENABLED(CONFIG_NRF_PROVISIONING_AUTO_INIT)) {
+		ret = nrf_provisioning_init(&mmode, &dmode);
+		if (ret) {
+			LOG_ERR("Failed to initialize provisioning client");
+		}
+
+		/* Need to connect for provisioning to happen. */
+		modem_connect();
+
+		LOG_INF("Waiting for provisioning to complete");
+		k_sem_take(&provisioning_mutex, K_FOREVER);
+		LOG_INF("Provisioning completed");
+	}
+#endif
 
 	/* Setup LwM2M */
 	ret = lwm2m_setup();
@@ -611,6 +725,23 @@ int main(void)
 		LOG_ERR("Failed to setup LWM2M fields (%d)", ret);
 		return 0;
 	}
+
+	if (IS_ENABLED(CONFIG_APP_ENDPOINT_CLIENT_NAME_SEC_IDENTITY)) {
+		char identity[CONFIG_LWM2M_SECURITY_KEY_SIZE];
+		size_t identity_len = sizeof(identity);
+
+		ret = modem_key_mgmt_read(client.tls_tag, MODEM_KEY_MGMT_CRED_TYPE_IDENTITY,
+					  identity, &identity_len);
+		if (ret == 0) {
+			snprintk(endpoint_name, sizeof(endpoint_name), "%s%s",
+				 CONFIG_APP_ENDPOINT_PREFIX, identity);
+		} else {
+			LOG_ERR("Failed to create endpoint name from identity");
+			return 0;
+		}
+	}
+
+	LOG_INF("endpoint: %s", (char *)endpoint_name);
 
 	if (IS_ENABLED(CONFIG_LWM2M_CLIENT_UTILS_FIRMWARE_UPDATE_OBJ_SUPPORT)) {
 		ret = lwm2m_init_image();
@@ -620,7 +751,9 @@ int main(void)
 		}
 	}
 
+#if !defined(CONFIG_NRF_PROVISIONING)
 	modem_connect();
+#endif
 
 #if defined(CONFIG_APP_GNSS)
 	initialise_gnss();

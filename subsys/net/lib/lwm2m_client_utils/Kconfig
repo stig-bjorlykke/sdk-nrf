@@ -49,6 +49,19 @@ config LWM2M_CLIENT_UTILS_BOOTSTRAP_TLS_TAG
 	  may write credentials into first LwM2M security instance "0/0/5".
 	  Client utilities only write to this security tag if it is empty.
 
+config LWM2M_CLIENT_UTILS_BOOTSTRAP_FROM_SIM
+	bool "LwM2M bootstrap from SIM support"
+	imply LWM2M_DTLS_SUPPORT
+	#imply LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP
+	imply UICC_LWM2M
+	help
+	  <TODO> Bootstrap from SIM.
+
+config LWM2M_CLIENT_UTILS_BOOTSTRAP_FROM_SIM_DATA
+	string "LwM2M bootstrap from SIM data"
+	help
+	  <TODO> Static LwM2M bootstrap from SIM data.
+
 endif # LWM2M_CLIENT_UTILS_SECURITY_OBJ_SUPPORT
 
 config LWM2M_CLIENT_UTILS_CONN_MON_OBJ_SUPPORT

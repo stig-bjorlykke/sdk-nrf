@@ -17,30 +17,18 @@
 #include <zephyr/net/socket_ncs.h>
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(lwm2m_security, CONFIG_LWM2M_CLIENT_UTILS_LOG_LEVEL);
+#include "lwm2m_security.h"
 
-/* LWM2M_OBJECT_SECURITY_ID */
-#define SECURITY_SERVER_URI_ID 0
-#define SECURITY_BOOTSTRAP_FLAG_ID 1
-#define SECURITY_MODE_ID 2
-#define SECURITY_CLIENT_PK_ID 3
-#define SECURITY_SERVER_PK_ID 4
-#define SECURITY_SECRET_KEY_ID 5
-#define SECURITY_SHORT_SERVER_ID 10
-/* LWM2M_OBJECT_SERVER_ID */
-#define SERVER_SHORT_SERVER_ID 0
-#define SERVER_LIFETIME_ID 1
+#if defined(CONFIG_LWM2M_CLIENT_UTILS_BOOTSTRAP_FROM_SIM)
+#include "lwm2m_bootstrap_from_sim.h"
+#endif
+
+LOG_MODULE_REGISTER(lwm2m_security, CONFIG_LWM2M_CLIENT_UTILS_LOG_LEVEL);
 
 /* Security settings storage definition */
 #define SETTINGS_PREFIX "lwm2m:sec"
 #define SETTINGS_PATH_LEN sizeof(SETTINGS_PREFIX) + LWM2M_MAX_PATH_STR_SIZE
 #define SETTINGS_PATH_FMT  SETTINGS_PREFIX "/%hu/%hu/%hu"
-
-enum security_mode {
-	SEC_MODE_PSK = 0,
-	SEC_MODE_CERTIFICATE = 2,
-	SEC_MODE_NO_SEC = 3,
-};
 
 static struct modem_mode_change mm;
 static bool purge_sessions;
@@ -319,7 +307,8 @@ static int load_credentials_to_modem(struct lwm2m_ctx *ctx)
 	 * assume that the ones in modem are correct.
 	 * Don't overwrite bootstrap keys with hardcoded keys.
 	 */
-	if (exist && (have_permanently_stored_keys || ctx->bootstrap_mode || !has_credentials)) {
+	/* Todo: Check how to handle hardcoded keys vs keys from SIM. */
+	if (exist && (have_permanently_stored_keys || !has_credentials)) {
 		LOG_DBG("Existing credentials found on modem");
 		if (ctx->bootstrap_mode) {
 			/* Enable writing credentials after bootstrap */
@@ -394,7 +383,7 @@ out:
 	return ret;
 }
 
-#if defined(CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP)
+// #if defined(CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP)
 
 static bool object_instance_exist(int obj, int inst)
 {
@@ -458,6 +447,19 @@ static int set(const char *key, size_t len_rd, settings_read_cb read_cb, void *c
 	if (len <= 0) {
 		LOG_ERR("Failed to read data");
 		return -ENOENT;
+	}
+
+	struct lwm2m_engine_obj_field *obj_field = NULL;
+
+	/* Hack to adjust for bool represented in string. */
+	ret = path_to_objs(&path, NULL, &obj_field, NULL, NULL);
+	if ((ret >= 0) && obj_field && obj_field->data_type == LWM2M_RES_TYPE_BOOL) {
+		if (*(uint8_t *)buf == 0 || *(uint8_t *)buf == '0') {
+			*((uint8_t *)buf) = 0;
+		} else {
+			*((uint8_t *)buf) = 1;
+		}
+		len = 1;
 	}
 
 	lwm2m_set_res_data_len(&path,  len);
@@ -590,14 +592,18 @@ static bool server_keys_exist_in_modem(void)
 
 bool lwm2m_security_needs_bootstrap(void)
 {
+#if CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP
 	return !have_permanently_stored_keys || !server_keys_exist_in_modem();
-}
-#else /* CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP */
-bool lwm2m_security_needs_bootstrap(void)
-{
+#else
 	return false;
-}
 #endif /* CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP */
+}
+//#else /* CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP */
+//bool lwm2m_security_needs_bootstrap(void)
+//{
+//	return false;
+//}
+//#endif /* CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP */
 #endif /* CONFIG_LWM2M_DTLS_SUPPORT */
 
 static int init_default_security_obj(struct lwm2m_ctx *ctx, char *endpoint)
@@ -788,6 +794,7 @@ int lwm2m_init_security(struct lwm2m_ctx *ctx, char *endpoint, struct modem_mode
 	lwm2m_register_delete_callback(LWM2M_OBJECT_SECURITY_ID, security_deleted);
 	lwm2m_register_create_callback(LWM2M_OBJECT_SERVER_ID, server_created);
 	lwm2m_register_delete_callback(LWM2M_OBJECT_SERVER_ID, server_deleted);
+#endif
 
 	int ret = settings_subsys_init();
 
@@ -802,17 +809,36 @@ int lwm2m_init_security(struct lwm2m_ctx *ctx, char *endpoint, struct modem_mode
 		return ret;
 	}
 
+#if defined(CONFIG_LWM2M_CLIENT_UTILS_BOOTSTRAP_FROM_SIM)
+	loading_in_progress = true;
+	ret = lwm2m_bootstrap_from_sim(ctx, endpoint);
+	loading_in_progress = false;
+
+	if (ret > 0) {
+		LOG_INF("Bootstrap from SIM: %d", ret);
+		return 0;
+	} else if (ret < 0) {
+		LOG_ERR("Failed to bootstrap from SIM, %d", ret);
+	}
+#endif /* CONFIG_LWM2M_CLIENT_UTILS_BOOTSTRAP_FROM_SIM */
+
 	ret = settings_load_subtree(SETTINGS_PREFIX);
 	if (ret) {
 		LOG_ERR("Failed to load settings, %d", ret);
 		return ret;
 	}
 
+#if defined(CONFIG_LWM2M_RD_CLIENT_SUPPORT_BOOTSTRAP)
 	if (have_permanently_stored_keys && bootstrap_settings_loaded_inst > 0) {
 		/* I don't need the default security instance 0 anymore */
 		loading_in_progress = true;
 		lwm2m_delete_object_inst(&LWM2M_OBJ(0, 0));
 		loading_in_progress = false;
+		return 0;
+	}
+
+	if (bootstrap_settings_loaded_inst == 0) {
+		/* Already found bootstrap settings which can be used */
 		return 0;
 	}
 

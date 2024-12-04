@@ -115,6 +115,21 @@ config APP_LWM2M_PSK
 	  Pre Shared Key must be identical to the PSK registered with the device on the LwM2M server.
 	  Use the hexadecimal representation.
 
+choice APP_ENDPOINT_CLIENT_NAME_CHOICE
+	prompt "Endpoint Client Name format"
+	default APP_ENDPOINT_CLIENT_NAME_IMEI
+
+config APP_ENDPOINT_CLIENT_NAME_IMEI
+	bool "<imei>"
+
+config APP_ENDPOINT_CLIENT_NAME_ICCID
+	bool "<iccid>"
+
+config APP_ENDPOINT_CLIENT_NAME_SEC_IDENTITY
+	bool "<security identity>"
+
+endchoice
+
 config APP_ENDPOINT_PREFIX
 	string "Prefix used in the endpoint name"
 	default "urn:imei:"

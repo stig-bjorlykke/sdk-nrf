@@ -1,0 +1,20 @@
+[
+	{
+		"bn":"/",
+		"n":"0/0/0",
+		"vs":"coaps://leshan.eclipseprojects.io:5784"
+	},
+	{
+		"n":"0/0/1",
+		"vb":true
+	},
+	{
+		"n":"0/0/2",
+		"v":0
+	},
+	{
+		"n":"0/0/5",
+		"vd":"bm9yZGljc2VjcmV0"
+	}
+]
+

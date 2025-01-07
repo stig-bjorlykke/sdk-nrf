@@ -355,7 +355,8 @@ static int sock_set_tls_options(
 	uint32_t sec_tag,
 	bool session_cache,
 	int peer_verify,
-	char *peer_hostname)
+	char *peer_hostname,
+	int dtls_connection_id)
 {
 	int err;
 	uint32_t sec_tag_list[] = { sec_tag };
@@ -410,6 +411,65 @@ static int sock_set_tls_options(
 			return errno;
 		}
 	}
+
+	/* DTLS connection ID */
+	if (dtls_connection_id) {
+		err = setsockopt(fd, SOL_TLS, TLS_DTLS_CID, &dtls_connection_id,
+				 sizeof(dtls_connection_id));
+		if (err) {
+			mosh_error("Unable to set DTLS connection ID, errno %d", errno);
+			return errno;
+		}
+	}
+
+	return 0;
+}
+
+static int sock_get_dtls_status(int fd, bool session_cache, int dtls_connection_id)
+{
+	int err;
+	int status;
+	int len = sizeof(status);
+	char status_str[64];
+
+	if (session_cache) {
+		err = getsockopt(fd, SOL_TLS, TLS_DTLS_HANDSHAKE_STATUS, &status, &len);
+		if (err) {
+			mosh_error("Unable to get DTLS handshake status, errno %d", errno);
+			return -errno;
+		}
+
+		if (status == TLS_DTLS_HANDSHAKE_STATUS_FULL) {
+			sprintf(status_str, "Full");
+		} else if (status == TLS_DTLS_HANDSHAKE_STATUS_CACHED) {
+			sprintf(status_str, "Cached");
+		} else {
+			sprintf(status_str, "Unknown (%d)", status);
+		}
+		mosh_print("Handshake status: %s", status_str);
+	}
+
+	if (dtls_connection_id) {
+		err = getsockopt(fd, SOL_TLS, TLS_DTLS_CID_STATUS, &status, &len);
+		if (err) {
+			mosh_error("Unable to get DTLS connection ID status, errno %d", errno);
+			return -errno;
+		}
+
+		if (status == TLS_DTLS_CID_STATUS_DISABLED) {
+			sprintf(status_str, "Disabled");
+		} else if (status == TLS_DTLS_CID_STATUS_DOWNLINK) {
+			sprintf(status_str, "Downlink");
+		} else if (status == TLS_DTLS_CID_STATUS_UPLINK) {
+			sprintf(status_str, "Uplink");
+		} else if (status == TLS_DTLS_CID_STATUS_BIDIRECTIONAL) {
+			sprintf(status_str, "Bidirectional");
+		} else {
+			sprintf(status_str, "Unknown (%d)", status);
+		}
+		mosh_print("Connection ID status: %s", status_str);
+	}
+
 	return 0;
 }
 
@@ -530,7 +590,8 @@ int sock_open_and_connect(
 	bool session_cache,
 	bool keep_open,
 	int peer_verify,
-	char *peer_hostname)
+	char *peer_hostname,
+	int dtls_connection_id)
 {
 	int err = -EINVAL;
 	int proto = 0;
@@ -633,7 +694,8 @@ int sock_open_and_connect(
 
 	/* Set (D)TLS options */
 	if (secure) {
-		err = sock_set_tls_options(fd, sec_tag, session_cache, peer_verify, peer_hostname);
+		err = sock_set_tls_options(fd, sec_tag, session_cache, peer_verify, peer_hostname,
+					   dtls_connection_id);
 		if (err) {
 			goto connect_error;
 		}
@@ -650,6 +712,13 @@ int sock_open_and_connect(
 		if (err) {
 			mosh_error("Unable to connect, errno %d", errno);
 			err = errno;
+			goto connect_error;
+		}
+	}
+
+	if (secure && type == SOCK_DGRAM) {
+		err = sock_get_dtls_status(fd, session_cache, dtls_connection_id);
+		if (err) {
 			goto connect_error;
 		}
 	}

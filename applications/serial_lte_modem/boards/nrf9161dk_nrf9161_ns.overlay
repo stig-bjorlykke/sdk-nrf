@@ -7,11 +7,18 @@
 / {
 	chosen {
 		ncs,slm-uart = &uart0;
+		nordic,pm-ext-flash = &gd25wb256;
 	};
 };
 
 &uart0 {
 	status = "okay";
+	hw-flow-control;
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <1000000>;
 	hw-flow-control;
 };
 

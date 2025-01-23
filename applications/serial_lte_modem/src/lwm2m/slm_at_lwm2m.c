@@ -493,7 +493,7 @@ static int handle_at_lwm2m_data(enum at_parser_cmd_type cmd_type, struct at_pars
 			/* Read resource instance data */
 			err = slm_lwm2m_binaryappdata_read(obj_inst_id, obj_inst_id,
 							   res_inst_id, res_inst_id);
-		} else if (param_count == 4) {
+		} else if (param_count == 5) {
 			/* Write resource instance data */
 			const char *hex_data;
 			uint32_t hex_data_len;
@@ -511,6 +511,35 @@ static int handle_at_lwm2m_data(enum at_parser_cmd_type cmd_type, struct at_pars
 				return -EINVAL;
 			}
 			err = lwm2m_binaryappdata_write(obj_inst_id, res_inst_id, data, data_len);
+			if (err) {
+				LOG_ERR("lwm2m_binaryappdata_write, error: %d", err);
+				return err;
+			}
+
+			uint16_t push = false;
+
+			err = at_parser_uint16_get(parser, 4, &push);
+			if (err) {
+				LOG_ERR("at_parser_uint16_get, error: %d", err);
+				return err;
+			}
+
+			/* If the PUSH flag in the command is set we send the value to the
+			 * LwM2M server right away.
+			 */
+			if (push) {
+				struct lwm2m_obj_path path_list[] = {
+					LWM2M_OBJ(obj_inst_id, res_inst_id, 0),
+				};
+
+				err = lwm2m_send_cb(&client, path_list,
+						    ARRAY_SIZE(path_list), NULL);
+				if (err) {
+					LOG_ERR("lwm2m_send_cb, error: %d", err);
+					return err;
+				}
+			}
+
 		} else {
 			err = -EINVAL;
 		}

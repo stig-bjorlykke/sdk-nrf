@@ -139,6 +139,22 @@ config SLM_DATAMODE_BUF_SIZE
 #
 # Configurable services
 #
+config SLM_SOCKET
+	bool "Socket support in SLM"
+	default y
+
+config SLM_TCP_PROXY
+	bool "TCP proxy support in SLM"
+	default y
+
+config SLM_UDP_PROXY
+	bool "UDP proxy support in SLM"
+	default y
+
+config SLM_ICMP
+	bool "ICMP support in SLM"
+	default y
+
 config SLM_SMS
 	bool "SMS support in SLM"
 	default y

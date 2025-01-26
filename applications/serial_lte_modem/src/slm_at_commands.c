@@ -25,11 +25,21 @@
 #include "slm_util.h"
 #include "slm_settings.h"
 #include "slm_at_host.h"
+#if defined(CONFIG_SLM_TCP_PROXY)
 #include "slm_at_tcp_proxy.h"
+#endif
+#if defined(CONFIG_SLM_UDP_PROXY)
 #include "slm_at_udp_proxy.h"
+#endif
+#if defined(CONFIG_SLM_SOCKET)
 #include "slm_at_socket.h"
+#endif
+#if defined(CONFIG_SLM_ICMP)
 #include "slm_at_icmp.h"
+#endif
+#if defined(CONFIG_SLM_SMS)
 #include "slm_at_sms.h"
+#endif
 #include "slm_at_fota.h"
 #if defined(CONFIG_SLM_NATIVE_TLS)
 #include "slm_at_cmng.h"
@@ -379,26 +389,34 @@ int slm_at_init(void)
 	k_work_init_delayable(&sleep.work, go_sleep_wk);
 #endif
 
+#if defined(CONFIG_SLM_TCP_PROXY)
 	err = slm_at_tcp_proxy_init();
 	if (err) {
 		LOG_ERR("TCP Server could not be initialized: %d", err);
 		return -EFAULT;
 	}
+#endif
+#if defined(CONFIG_SLM_UDP_PROXY)
 	err = slm_at_udp_proxy_init();
 	if (err) {
 		LOG_ERR("UDP Server could not be initialized: %d", err);
 		return -EFAULT;
 	}
+#endif
+#if defined(CONFIG_SLM_SOCKET)
 	err = slm_at_socket_init();
 	if (err) {
 		LOG_ERR("TCPIP could not be initialized: %d", err);
 		return -EFAULT;
 	}
+#endif
+#if defined(CONFIG_SLM_ICMP)
 	err = slm_at_icmp_init();
 	if (err) {
 		LOG_ERR("ICMP could not be initialized: %d", err);
 		return -EFAULT;
 	}
+#endif
 #if defined(CONFIG_SLM_SMS)
 	err = slm_at_sms_init();
 	if (err) {
@@ -491,22 +509,30 @@ void slm_at_uninit(void)
 {
 	int err;
 
+#if defined(CONFIG_SLM_TCP_PROXY)
 	err = slm_at_tcp_proxy_uninit();
 	if (err) {
 		LOG_WRN("TCP Server could not be uninitialized: %d", err);
 	}
+#endif
+#if defined(CONFIG_SLM_UDP_PROXY)
 	err = slm_at_udp_proxy_uninit();
 	if (err) {
 		LOG_WRN("UDP Server could not be uninitialized: %d", err);
 	}
+#endif
+#if defined(CONFIG_SLM_SOCKET)
 	err = slm_at_socket_uninit();
 	if (err) {
 		LOG_WRN("TCPIP could not be uninitialized: %d", err);
 	}
+#endif
+#if defined(CONFIG_SLM_ICMP)
 	err = slm_at_icmp_uninit();
 	if (err) {
 		LOG_WRN("ICMP could not be uninitialized: %d", err);
 	}
+#endif
 #if defined(CONFIG_SLM_SMS)
 	err = slm_at_sms_uninit();
 	if (err) {

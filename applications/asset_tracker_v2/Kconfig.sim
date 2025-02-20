@@ -1,0 +1,14 @@
+choice SIM_TYPE
+	prompt "SIM type"
+	default REGULAR_SIM
+
+config REGULAR_SIM
+	bool "Regular SIM"
+
+config ONOMONDO_SOFTSIM
+	bool "onomondo SoftSIM"
+
+config REDTEA_NUSIM
+	bool "Redtea nuSIM"
+
+endchoice

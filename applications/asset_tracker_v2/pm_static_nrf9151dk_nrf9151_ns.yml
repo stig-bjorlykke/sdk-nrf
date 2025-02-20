@@ -1,3 +1,14 @@
+tfm_its:
+  address: 0xf8000
+  size: 0x6000
+tfm_otp_nv_counters:
+  address: 0xfe000
+  size: 0x2000
+tfm_storage:
+  address: 0xf8000
+  size: 0x8000
+  span: [tfm_its, tfm_otp_nv_counters]
+
 mcuboot_secondary:
   region: external_flash
   address: 0x0

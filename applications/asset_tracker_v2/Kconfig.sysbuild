@@ -33,3 +33,5 @@ config PM_EXTERNAL_FLASH_MCUBOOT_SECONDARY
 		&& "${BOARD_REVISION}" != "0.9.0"
 
 source "${ZEPHYR_BASE}/share/sysbuild/Kconfig"
+
+rsource "Kconfig.sim"

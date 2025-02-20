@@ -292,6 +292,16 @@ manifest:
       groups:
         - benchmark
 
+    # Third-party SIM repositories.
+    - name: onomondo-softsim
+      path: modules/lib/onomondo-softsim
+      url: git@github.com:stig-bjorlykke/nrf-softsim.git
+      revision: develop
+    - name: redteamobile-nusim
+      path: modules/lib/redteamobile-nusim
+      url: git@github.com:stig-bjorlykke/ncs-nusim-app.git
+      revision: develop
+
   # West-related configuration for the nrf repository.
   self:
     # This repository should be cloned to ncs/nrf.

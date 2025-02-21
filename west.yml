@@ -292,6 +292,12 @@ manifest:
       groups:
         - benchmark
 
+    # Third-party nuSIM repository.
+    - name: redteamobile-nusim
+      path: modules/lib/redteamobile-nusim
+      url: https://github.com/redteamobile/ncs-nusim-app.git
+      revision: v1.0.0.0-ncs_v2.8.0
+
   # West-related configuration for the nrf repository.
   self:
     # This repository should be cloned to ncs/nrf.

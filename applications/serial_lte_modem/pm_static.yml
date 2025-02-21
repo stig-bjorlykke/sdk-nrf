@@ -8,3 +8,9 @@ tfm_storage:
   address: 0xf8000
   size: 0x8000
   span: [tfm_its, tfm_otp_nv_counters]
+
+settings_storage:
+  device: DT_CHOSEN(nordic_pm_ext_flash)
+  address: 0x0000
+  size: 0x2000
+  region: external_flash

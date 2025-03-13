@@ -41,6 +41,7 @@ struct at_cmd_mode_work_data {
 static struct at_cmd_mode_work_data at_cmd_mode_work;
 
 static bool at_cmd_mode_active;
+static bool at_echo_mode = true;
 static bool inside_quotes;
 static bool writing;
 static size_t at_cmd_len;
@@ -49,7 +50,7 @@ K_MUTEX_DEFINE(at_buf_mutex);
 
 static void at_cmd_mode_event_handler(const char *response)
 {
-	if (writing) {
+	if (writing && at_echo_mode) {
 		/* 1st we need to clear current writings */
 		printk("\r");
 		for (int i = 0; i < at_cmd_len; i++) {
@@ -177,8 +178,11 @@ static void at_cmd_mode_cmd_rx_handler(uint8_t character)
 		inside_quotes = !inside_quotes;
 	}
 
-	/* Echo */
-	printk("%c", character);
+	if (at_echo_mode) {
+		/* Echo */
+		printk("%c", character);
+	}
+
 	return;
 send:
 
@@ -187,6 +191,21 @@ send:
 	inside_quotes = false;
 	at_cmd_len = 0;
 	k_mutex_unlock(&at_buf_mutex);
+
+	if (at_echo_mode) {
+		/* Echo a line feed */
+		printk("\n");
+	}
+
+	if (strncmp(at_buf, "ATE0", 4) == 0) {
+	    at_echo_mode = false;
+	    printk("OK\r\n");
+	    return;
+	} else if (strncmp(at_buf, "ATE1", 4) == 0) {
+	    at_echo_mode = true;
+	    printk("OK\r\n");
+	    return;
+	}
 
 	/* Scan AT command buffer for possible pipelined at commands */
 	at_cmd_mode_work.pipe_cnt = 0;
@@ -221,9 +240,6 @@ send:
 			tmp = strtok(NULL, "|");
 		}
 	}
-
-	/* Echo a line feed */
-	printk("\n");
 
 	writing = false;
 

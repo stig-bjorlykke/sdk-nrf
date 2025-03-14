@@ -79,6 +79,13 @@ static void at_cmd_mode_send_at_cmd(const char *at_str, char *rsp_buf, int rsp_b
 		sprintf(rsp_buf, "ERROR: AT command failed: %d\n", err);
 	} /* else if (err > 0): print error from modem */
 
+	/* Remove CR from response because printk() will add it back for each \n */
+	for (int i = 0, j = 0; i < strlen(rsp_buf) + 1; i++) {
+		if (rsp_buf[i] != '\r') {
+			rsp_buf[j++] = rsp_buf[i];
+		}
+	}
+
 	/* Response */
 	printk("%s", rsp_buf);
 }
@@ -114,6 +121,8 @@ static void at_cmd_mode_worker(struct k_work *item)
 
 static void at_cmd_mode_cmd_rx_handler(uint8_t character)
 {
+	static uint8_t prev;
+
 	writing = true;
 
 	/* Handle control characters */
@@ -178,9 +187,16 @@ static void at_cmd_mode_cmd_rx_handler(uint8_t character)
 		inside_quotes = !inside_quotes;
 	}
 
+	/* Echo */
 	if (at_echo_mode) {
-		/* Echo */
-		printk("%c", character);
+		/* Avoid \r before \n because printk() will add it back for each \n */
+		if (prev == '\r' && character != '\n') {
+			printk("\r");
+		}
+		if (character != '\r') {
+			printk("%c", character);
+		}
+		prev = character;
 	}
 
 	return;
@@ -192,18 +208,19 @@ send:
 	at_cmd_len = 0;
 	k_mutex_unlock(&at_buf_mutex);
 
+	/* Echo a line feed */
 	if (at_echo_mode) {
-		/* Echo a line feed */
 		printk("\n");
+		prev = '\0';
 	}
 
 	if (strncmp(at_buf, "ATE0", 4) == 0) {
 	    at_echo_mode = false;
-	    printk("OK\r\n");
+	    printk("OK\n");
 	    return;
 	} else if (strncmp(at_buf, "ATE1", 4) == 0) {
 	    at_echo_mode = true;
-	    printk("OK\r\n");
+	    printk("OK\n");
 	    return;
 	}
 

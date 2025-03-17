@@ -287,6 +287,8 @@ static void gnss_carrier_location(struct nrf_modem_gnss_pvt_data_frame *pvt)
 }
 #endif
 
+extern void ntn_location(struct nrf_modem_gnss_pvt_data_frame *pvt);
+
 static void print_pvt_flags(struct nrf_modem_gnss_pvt_data_frame *pvt)
 {
 	mosh_print("");
@@ -407,6 +409,7 @@ static void data_handler_thread_fn(void)
 #if defined(CONFIG_LWM2M_CARRIER)
 			gnss_carrier_location((struct nrf_modem_gnss_pvt_data_frame *)event.data);
 #endif
+			ntn_location((struct nrf_modem_gnss_pvt_data_frame *)event.data);
 			break;
 
 		case NRF_MODEM_GNSS_EVT_FIX:

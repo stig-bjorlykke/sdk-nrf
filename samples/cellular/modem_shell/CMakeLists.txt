@@ -12,6 +12,7 @@ target_include_directories(app PRIVATE src)
 
 target_sources(app PRIVATE src/main.c)
 target_sources(app PRIVATE src/shell.c)
+target_sources(app PRIVATE src/ntn_shell.c)
 
 add_subdirectory(src/print)
 add_subdirectory(src/utils)

@@ -26,18 +26,37 @@ Using a serial terminal
 
 If you prefer to use a standard serial terminal, you need to specify the baud rate manually.
 
-Thingy:91 uses the following UART baud rate configuration:
+.. tabs::
 
-.. list-table::
-   :header-rows: 1
-   :align: center
+   .. group-tab:: Thingy:91
 
-   * - UART Interface
-     - Baud Rate
-   * - UART_0
-     - 115200
-   * - UART_1
-     - 1000000
+      Thingy:91 uses the following UART baud rate configuration:
+
+      .. list-table::
+         :header-rows: 1
+         :align: center
+
+         * - UART Interface
+           - Baud Rate
+         * - UART_0
+           - 115200
+         * - UART_1
+           - 1000000
+
+   .. group-tab:: Thingy:91 X
+
+      Thingy:91 X uses the following UART baud rate configuration:
+
+      .. list-table::
+         :header-rows: 1
+         :align: center
+
+         * - UART Interface
+           - Baud Rate
+         * - UART_0
+           - 1000000
+         * - UART_1
+           - 1000000
 
 Using the Serial Terminal app
 *****************************

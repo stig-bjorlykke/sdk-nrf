@@ -14,6 +14,11 @@
 	status = "okay";
 };
 
+&uart1 {
+	status = "okay";
+	hw-flow-control;
+};
+
 &button0 {
 	status = "disabled";
 };

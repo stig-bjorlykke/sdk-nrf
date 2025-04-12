@@ -123,7 +123,7 @@
 &uart1 {
 	status = "disabled";
 	compatible = "nordic,nrf-uarte";
-	current-speed = <115200>;
+	current-speed = <1000000>;
 	pinctrl-0 = <&uart1_default>;
 	pinctrl-1 = <&uart1_sleep>;
 	pinctrl-names = "default", "sleep";

@@ -12,6 +12,7 @@
 #include <modem/nrf_modem_lib.h>
 #include <zephyr/sys/reboot.h>
 #include <net/nrf_cloud.h>
+#include <nrf_socket.h>
 
 /* Module name is used by the Application Event Manager macros in this file */
 #define MODULE main
@@ -522,6 +523,42 @@ static void on_all_events(struct app_msg_data *msg)
 	}
 }
 
+static void link_setdnsaddr(const char *ip_address)
+{
+	struct nrf_in_addr in4_addr;
+	struct nrf_in6_addr in6_addr;
+	int family = NRF_AF_INET;
+	void *in_addr = NULL;
+	nrf_socklen_t in_size = 0;
+	int ret = 0;
+
+	if (strlen(ip_address) > 0) {
+		in_addr = &in4_addr;
+		in_size = sizeof(in4_addr);
+		ret = nrf_inet_pton(family, ip_address, in_addr);
+
+		if (ret != 1) {
+			family = NRF_AF_INET6;
+			in_addr = &in6_addr;
+			in_size = sizeof(in6_addr);
+			ret = nrf_inet_pton(family, ip_address, in_addr);
+		}
+
+		if (ret != 1) {
+			LOG_ERR("Invalid IP address: %s", ip_address);
+			return;
+		}
+	}
+
+	ret = nrf_setdnsaddr(family, in_addr, in_size);
+	if (ret != 0) {
+		LOG_ERR("Error setting DNS address: %d", errno);
+		return;
+	}
+
+	LOG_DBG("DNS address set to: %s", ip_address);
+}
+
 int main(void)
 {
 	int err;
@@ -542,6 +579,9 @@ int main(void)
 		modem_init();
 #endif
 	}
+
+	/* Use Cloudflare DNS as a failsafe */
+	link_setdnsaddr("1.1.1.1");
 
 	self.thread_id = k_current_get();
 

@@ -46,7 +46,6 @@ manifest:
     - -dragoon
     - -find-my
     - -babblesim
-    - -libmodem
     - -bsec
     - -doc-internal
     - +optional
@@ -220,10 +219,6 @@ manifest:
           upstream-url: https://github.com/CirrusLogic/mcu-drivers
           upstream-sha: 1be6ca7253133a21a1e9fe0fbb4656e17d63a936
           compare-by-default: false
-    - name: libmodem
-      revision: 5dc5bc768dda0ddf9974920c618b70da5d67c6c3
-      groups:
-        - libmodem
     - name: openthread
       repo-path: sdk-openthread
       path: modules/lib/openthread
@@ -282,6 +277,10 @@ manifest:
       revision: d5fad6bd094899101a4e5fd53af7298160ced6ab
       groups:
         - benchmark
+
+    - name: libmodem
+      url: https://github.com/nrfconnect/libmodem
+      revision: main
 
   # West-related configuration for the nrf repository.
   self:

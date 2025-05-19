@@ -159,8 +159,6 @@ struct cloud_data_sensors {
 struct cloud_data_modem_static {
 	/** Static modem data timestamp. UNIX milliseconds. */
 	int64_t ts;
-	/** Integrated Circuit Card Identifier. */
-	char iccid[23];
 	/** Application version and Mobile Network Code. */
 	char appv[CONFIG_ASSET_TRACKER_V2_APP_VERSION_MAX_LEN];
 	/** Device board version. */
@@ -196,6 +194,8 @@ struct cloud_data_modem_dynamic {
 	char apn[CONFIG_CLOUD_CODEC_APN_LEN_MAX];
 	/** Mobile Country Code and Mobile Network Code. */
 	char mccmnc[7];
+	/** Integrated Circuit Card Identifier. */
+	char iccid[23];
 	/* Energy estimate */
 	uint16_t energy_estimate;
 	/** Flag signifying that the data entry is to be encoded. */

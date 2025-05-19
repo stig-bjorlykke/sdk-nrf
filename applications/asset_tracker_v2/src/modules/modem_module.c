@@ -569,10 +569,6 @@ static int static_modem_data_get(void)
 		modem_param.device.modem_fw.value_string,
 		sizeof(modem_module_event->data.modem_static.modem_fw) - 1);
 
-	strncpy(modem_module_event->data.modem_static.iccid,
-		modem_param.sim.iccid.value_string,
-		sizeof(modem_module_event->data.modem_static.iccid) - 1);
-
 	strncpy(modem_module_event->data.modem_static.imei,
 		modem_param.device.imei.value_string,
 		sizeof(modem_module_event->data.modem_static.imei) - 1);
@@ -585,9 +581,6 @@ static int static_modem_data_get(void)
 
 	modem_module_event->data.modem_static.modem_fw
 		[sizeof(modem_module_event->data.modem_static.modem_fw) - 1] = '\0';
-
-	modem_module_event->data.modem_static.iccid
-		[sizeof(modem_module_event->data.modem_static.iccid) - 1] = '\0';
 
 	modem_module_event->data.modem_static.imei
 		[sizeof(modem_module_event->data.modem_static.imei) - 1] = '\0';
@@ -632,6 +625,13 @@ static void populate_event_with_dynamic_modem_data(struct modem_module_event *ev
 
 	event->data.modem_dynamic.mccmnc
 		[sizeof(event->data.modem_dynamic.mccmnc) - 1] = '\0';
+
+	strncpy(event->data.modem_dynamic.iccid,
+		modem_param.sim.iccid.value_string,
+		sizeof(event->data.modem_dynamic.iccid) - 1);
+
+	event->data.modem_dynamic.iccid
+		[sizeof(event->data.modem_dynamic.iccid) - 1] = '\0';
 
 	struct lte_lc_conn_eval_params coneval = { 0 };
 	int err = lte_lc_conn_eval_params_get(&coneval);

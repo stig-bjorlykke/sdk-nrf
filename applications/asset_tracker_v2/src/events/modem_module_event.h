@@ -150,7 +150,6 @@ struct modem_module_edrx {
 
 struct modem_module_static_modem_data {
 	int64_t timestamp;
-	char iccid[23];
 	char app_version[CONFIG_ASSET_TRACKER_V2_APP_VERSION_MAX_LEN];
 	char board_version[30];
 	char modem_fw[40];
@@ -170,6 +169,7 @@ struct modem_module_dynamic_modem_data {
 	char mccmnc[7];
 	uint8_t band;
 	enum lte_lc_lte_mode nw_mode;
+	char iccid[23];
 };
 
 /** @brief Modem event. */

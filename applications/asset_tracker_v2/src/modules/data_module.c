@@ -1086,16 +1086,12 @@ static void on_all_states(struct data_msg_data *msg)
 		BUILD_ASSERT(sizeof(modem_stat.fw) >=
 			     sizeof(msg->module.modem.data.modem_static.modem_fw));
 
-		BUILD_ASSERT(sizeof(modem_stat.iccid) >=
-			     sizeof(msg->module.modem.data.modem_static.iccid));
-
 		BUILD_ASSERT(sizeof(modem_stat.imei) >=
 			     sizeof(msg->module.modem.data.modem_static.imei));
 
 		strcpy(modem_stat.appv, msg->module.modem.data.modem_static.app_version);
 		strcpy(modem_stat.brdv, msg->module.modem.data.modem_static.board_version);
 		strcpy(modem_stat.fw, msg->module.modem.data.modem_static.modem_fw);
-		strcpy(modem_stat.iccid, msg->module.modem.data.modem_static.iccid);
 		strcpy(modem_stat.imei, msg->module.modem.data.modem_static.imei);
 
 		requested_data_status_set(APP_DATA_MODEM_STATIC);
@@ -1128,9 +1124,13 @@ static void on_all_states(struct data_msg_data *msg)
 		BUILD_ASSERT(sizeof(new_modem_data.apn) >=
 			     sizeof(msg->module.modem.data.modem_dynamic.apn));
 
+		BUILD_ASSERT(sizeof(new_modem_data.iccid) >=
+			     sizeof(msg->module.modem.data.modem_dynamic.iccid));
+
 		strcpy(new_modem_data.ip, msg->module.modem.data.modem_dynamic.ip_address);
 		strcpy(new_modem_data.apn, msg->module.modem.data.modem_dynamic.apn);
 		strcpy(new_modem_data.mccmnc, msg->module.modem.data.modem_dynamic.mccmnc);
+		strcpy(new_modem_data.iccid, msg->module.modem.data.modem_dynamic.iccid);
 
 		cloud_codec_populate_modem_dynamic_buffer(
 						modem_dyn_buf,

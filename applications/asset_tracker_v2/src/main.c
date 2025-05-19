@@ -572,9 +572,6 @@ int main(void)
 		k_sleep(K_SECONDS(5));
 		sys_reboot(SYS_REBOOT_COLD);
 	} else {
-		module_set_state(MODULE_STATE_READY);
-		SEND_EVENT(app, APP_EVT_START);
-
 #if defined(CONFIG_NRF_MODEM_LIB)
 		modem_init();
 #endif
@@ -584,6 +581,9 @@ int main(void)
 	link_setdnsaddr("1.1.1.1");
 
 	self.thread_id = k_current_get();
+
+	module_set_state(MODULE_STATE_READY);
+	SEND_EVENT(app, APP_EVT_START);
 
 	err = module_start(&self);
 	if (err) {

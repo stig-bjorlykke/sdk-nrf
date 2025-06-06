@@ -14,7 +14,16 @@
 #include "mosh_defines.h"
 #include "mosh_print.h"
 
+static bool poc_init = false;
+
 static const char *ntn_init_commands[] = {
+	"AT+CFUN=0",
+	"AT%XSYSTEMMODE=0,0,0,0,1",
+	"AT%XBANDLOCK=2,,\"255\"",
+	"AT%CHSELECT=1,14,228841"
+};
+
+static const char *ntn_init_poc_commands[] = {
 	"AT+CFUN=0",
 	"AT+CFUN=12",
 	// "AT%CSUS=2",
@@ -34,19 +43,33 @@ int ntn_setgpspos(double latitude, double longitude, float altitude)
 {
 	int err;
 
-	int at_lat = (int)((latitude + 90) * 1000);
-	int at_long = (int)((longitude + 180) * 1000);
-	int at_alt = (int)(altitude * 1000);
-
 	m_latitude = latitude;
 	m_longitude = longitude;
 	m_altitude = altitude;
 
-	/* Note: different order of latitude and longitude. */
-	mosh_print("AT%%XSETGPSPOS=%d,%d,%d", at_long, at_lat, at_alt);
-	err = nrf_modem_at_printf("AT%%XSETGPSPOS=%d,%d,%d", at_long, at_lat, at_alt);
+	if (poc_init) {
+		int at_lat = (int)((latitude + 90) * 1000);
+		int at_long = (int)((longitude + 180) * 1000);
+		int at_alt = (int)(altitude * 1000);
+
+		/* Note: different order of latitude and longitude. */
+		mosh_print("AT%%XSETGPSPOS=%d,%d,%d", at_long, at_lat, at_alt);
+
+		err = nrf_modem_at_printf("AT%%XSETGPSPOS=%d,%d,%d", at_long, at_lat, at_alt);
+		if (err) {
+			mosh_error("Failed to set AT%%XSETGPSPOS, error: %d", err);
+		}
+
+		return err;
+	}
+
+	mosh_print("AT%%LOCATION=2,\"%.6f\",\"%.6f\",\"%.2f\",0,0",
+		   latitude, longitude, (double)altitude);
+
+	err = nrf_modem_at_printf("AT%%LOCATION=2,\"%.6f\",\"%.6f\",\"%.2f\",0,0",
+				  latitude, longitude, (double)altitude);
 	if (err) {
-		mosh_error("Failed to set AT%%XSETGPSPOS, error: %d", err);
+		mosh_error("Failed to set AT%%LOCATION, error: %d", err);
 	}
 
 	return err;
@@ -60,6 +83,22 @@ void ntn_location(struct nrf_modem_gnss_pvt_data_frame *pvt)
 
 		ntn_setgpspos(pvt->latitude, pvt->longitude, pvt->altitude);
 	}
+}
+
+static int ntn_arg_location(const char *arg_location)
+{
+	if (arg_location[0] == '0') {
+		ntn_setgpspos(m_latitude, m_longitude, m_altitude);
+	} else if (arg_location[0] == '1') {
+		ntn_setgpspos(63.422428, 10.446461, 128.0);
+	} else if (arg_location[0] == '2') {
+		ntn_setgpspos(63.431702, 10.472007, 103.0);
+	} else {
+		mosh_error("Invalid static setting: %d", arg_location[0]);
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 static int cmd_ntn_init(const struct shell *shell, size_t argc, char **argv)
@@ -76,16 +115,32 @@ static int cmd_ntn_init(const struct shell *shell, size_t argc, char **argv)
 	}
 
 	if (argc > 1) {
-		if (argv[1][0] == '0') {
-			ntn_setgpspos(m_latitude, m_longitude, m_altitude);
-		} else if (argv[1][0] == '1') {
-			ntn_setgpspos(63.422428, 10.446461, 128.0);
-		} else if (argv[1][0] == '2') {
-			ntn_setgpspos(63.431702, 10.472007, 53.0);
-		} else {
-			mosh_error("Invalid static setting: %d", argv[1][0]);
-			return -EINVAL;
+		ntn_arg_location(argv[1]);
+	}
+
+	mosh_print("NTN modem configuration completed successfully");
+	m_initialized = true;
+
+	return 0;
+}
+
+static int cmd_ntn_init_poc(const struct shell *shell, size_t argc, char **argv)
+{
+	int err;
+
+	poc_init = true;
+
+	for (int i = 0; i < ARRAY_SIZE(ntn_init_poc_commands); i++) {
+		mosh_print("%s", ntn_init_poc_commands[i]);
+		err = nrf_modem_at_printf("%s", ntn_init_poc_commands[i]);
+		if (err) {
+			mosh_error("Failed to set %s, error: %d", ntn_init_poc_commands[i], err);
+			return err;
 		}
+	}
+
+	if (argc > 1) {
+		ntn_arg_location(argv[1]);
 	}
 
 	mosh_print("NTN modem configuration completed successfully");
@@ -106,6 +161,7 @@ static int cmd_ntn_status(const struct shell *shell, size_t argc, char **argv)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_ntn,
 	SHELL_CMD(init, NULL, "NTN initialize", cmd_ntn_init),
+	SHELL_CMD(init_poc, NULL, "NTN initialize PoC", cmd_ntn_init_poc),
 	SHELL_CMD(status, NULL, "NTN status", cmd_ntn_status),
 	SHELL_SUBCMD_SET_END
 );

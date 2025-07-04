@@ -19,19 +19,57 @@
 
 #define UICC_SELECT_IPAE_APPLET    "AT+CSIM=44,\"01A4040010D276000118FB01FF34100089C003080900\""
 #define UICC_SELECT_GATEWAY_APPLET "AT+CSIM=42,\"01A4040010D276000118FB01FF34100089C0031D09\""
+#define UICC_SELECT_ISD_APPLET     "AT+CSIM=44,\"01A4040010A0000005591010FFFFFFFF890000010000\""
 #define UICC_SELECT_TAC_APPLET     "AT+CSIM=40,\"01A4040C0FA00000003053F12816620101654E53\""
 
-static void exec_command(const char *command)
+static uint8_t response[24 + 256*2 + 1];
+
+static int exec_command_ret_sw(const char *command, uint8_t *sw1, uint8_t *sw2)
 {
-	uint8_t response[255];
 	int err;
 
 	mosh_print("%s", command);
 	err = nrf_modem_at_cmd(response, sizeof(response), "%s", command);
 	if (err) {
 		mosh_error("Failed to exec %s, error: %d", command, err);
+		return err;
 	}
 	mosh_print("%s", response);
+
+	if (sw1 && sw2) {
+		/* Response is "+CSIM: xxx,"dataSWSW"\r\nOK\r\n" */
+		size_t len = strlen(response);
+		if (len < 12) {
+			mosh_error("Response too short for SW1/SW2");
+			*sw1 = *sw2 = 0;
+			return -EINVAL;
+		}
+		hex2bin(&response[len - 11], 2, sw1, sizeof(*sw1));
+		hex2bin(&response[len - 9], 2, sw2, sizeof(*sw2));
+	}
+
+	return 0;
+}
+
+static int exec_command(const char *command)
+{
+	uint8_t sw1, sw2;
+	char cmd[64];
+
+	if (exec_command_ret_sw(command, &sw1, &sw2) != 0) {
+		return -EINVAL;
+	}
+
+	while (sw1 == 0x61 || sw1 == 0x6C) { /* 0x61 = Response Ready */
+		/* Read Response */
+		snprintf(cmd, sizeof(cmd), "AT+CSIM=10,\"01C00000%02X\"", sw2);
+
+		if (exec_command_ret_sw(cmd, &sw1, &sw2) != 0) {
+			return -EINVAL;
+		}
+	}
+
+	return 0;
 }
 
 static int cmd_gd_trigger(const struct shell *shell, size_t argc, char **argv)
@@ -39,8 +77,10 @@ static int cmd_gd_trigger(const struct shell *shell, size_t argc, char **argv)
 	mosh_print("G+D eIM trigger");
 
 	exec_command(UICC_OPEN_CHANNEL);
-	exec_command(UICC_SELECT_IPAE_APPLET);
-	exec_command("AT+CSIM=10,\"81A0000000\""); /* Trigger polling */
+	if (exec_command(UICC_SELECT_IPAE_APPLET) == 0) {
+		/* Trigger polling */
+		exec_command("AT+CSIM=10,\"81A0000000\"");
+	}
 	exec_command(UICC_CLOSE_CHANNEL);
 
 	return 0;
@@ -78,8 +118,9 @@ static int cmd_gd_set_eim_address(const struct shell *shell, size_t argc, char *
 	snprintf(cmd, sizeof(cmd), "AT+CSIM=28,\"81E2910009A6073E0521%08X\"", ntohl(ip_address));
 
 	exec_command(UICC_OPEN_CHANNEL);
-	exec_command(UICC_SELECT_IPAE_APPLET);
-	exec_command(cmd);
+	if (exec_command(UICC_SELECT_IPAE_APPLET) == 0) {
+		exec_command(cmd);
+	}
 	exec_command(UICC_CLOSE_CHANNEL);
 
 	return 0;
@@ -108,8 +149,9 @@ static int cmd_gd_set_trigger(const struct shell *shell, size_t argc, char **arg
 	snprintf(cmd, sizeof(cmd), "AT+CSIM=18,\"81E29100049F0201%02X\"", trigger);
 
 	exec_command(UICC_OPEN_CHANNEL);
-	exec_command(UICC_SELECT_GATEWAY_APPLET);
-	exec_command(cmd);
+	if (exec_command(UICC_SELECT_GATEWAY_APPLET) == 0) {
+		exec_command(cmd);
+	}
 	exec_command(UICC_CLOSE_CHANNEL);
 
 	return 0;
@@ -145,8 +187,9 @@ static int cmd_gd_set_timer_value(const struct shell *shell, size_t argc, char *
 	snprintf(cmd, sizeof(cmd), "AT+CSIM=22,\"81E29100069F0103%06X\"", timer_value);
 
 	exec_command(UICC_OPEN_CHANNEL);
-	exec_command(UICC_SELECT_GATEWAY_APPLET);
-	exec_command(cmd);
+	if (exec_command(UICC_SELECT_GATEWAY_APPLET) == 0) {
+		exec_command(cmd);
+	}
 	exec_command(UICC_CLOSE_CHANNEL);
 
 	return 0;
@@ -157,9 +200,10 @@ static int cmg_gd_euicc_memory_meset(const struct shell *shell, size_t argc, cha
 	mosh_print("G+D IPAe eUICC memory reset");
 
 	exec_command(UICC_OPEN_CHANNEL);
-	exec_command(UICC_SELECT_IPAE_APPLET);
-	exec_command("AT+CSIM=24,\"81E2910007BF640482020104\""); /* Send EuiccMemoryReset */
-	exec_command("AT+CSIM=10,\"01C0000009\"");               /* Read response */
+	if (exec_command(UICC_SELECT_IPAE_APPLET) == 0) {
+		/* Send EuiccMemoryReset */
+		exec_command("AT+CSIM=24,\"81E2910007BF64048202010400\"");
+	}
 	exec_command(UICC_CLOSE_CHANNEL);
 
 	return 0;
@@ -170,9 +214,10 @@ static int cmg_gd_exec_fallback(const struct shell *shell, size_t argc, char **a
 	mosh_print("G+D Gateway execute fallback mechanism");
 
 	exec_command(UICC_OPEN_CHANNEL);
-	exec_command(UICC_SELECT_GATEWAY_APPLET);
-	exec_command("AT+CSIM=22,\"81E2910006BF5D038001FF\""); /* Send ExecuteFallbackMechanism */
-	exec_command("AT+CSIM=10,\"01C0000006\"");             /* Read response */
+	if (exec_command(UICC_SELECT_GATEWAY_APPLET) == 0) {
+		/* Send ExecuteFallbackMechanism */
+		exec_command("AT+CSIM=22,\"81E2910006BF5D038001FF00\"");
+	}
 	exec_command(UICC_CLOSE_CHANNEL);
 
 	return 0;
@@ -183,9 +228,10 @@ static int cmd_gd_return_from_fallback(const struct shell *shell, size_t argc, c
 	mosh_print("G+D Gateway return from fallback");
 
 	exec_command(UICC_OPEN_CHANNEL);
-	exec_command(UICC_SELECT_GATEWAY_APPLET);
-	exec_command("AT+CSIM=22,\"81E2910006BF5E038001FF\""); /* Send ReturnFromFallback */
-	exec_command("AT+CSIM=10,\"01C0000006\"");             /* Read response */
+	if (exec_command(UICC_SELECT_GATEWAY_APPLET) == 0) {
+		/* Send ReturnFromFallback */
+		exec_command("AT+CSIM=22,\"81E2910006BF5E038001FF00\"");
+	}
 	exec_command(UICC_CLOSE_CHANNEL);
 
 	return 0;
@@ -196,28 +242,51 @@ static int cmd_tac_trigger(const struct shell *shell, size_t argc, char **argv)
 	mosh_print("TAC poll triggered");
 
 	exec_command(UICC_OPEN_CHANNEL);
-	exec_command(UICC_SELECT_TAC_APPLET);
-	exec_command("AT+CSIM=16,\"8100000003400101\""); /* Run Local Polling */
+	if (exec_command(UICC_SELECT_TAC_APPLET) == 0) {
+		/* Run Local Polling */
+		exec_command("AT+CSIM=16,\"8100000003400101\"");
+	}
 	exec_command(UICC_CLOSE_CHANNEL);
-	exec_command("AT+CSIM=10,\"80F2000000\"");       /* STATUS command */
+	/* STATUS command */
+	exec_command("AT+CSIM=10,\"80F2000000\"");
+
+	return 0;
+}
+
+static int cmd_notifications_list(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD RetrieveNotificationsListRequest");
+
+	exec_command(UICC_OPEN_CHANNEL);
+	if (exec_command(UICC_SELECT_ISD_APPLET) == 0) {
+		/* RetrieveNotificationsListRequest */
+		exec_command("AT+CSIM=16,\"81E2910003BF2B0000\"");
+	}
+	exec_command(UICC_CLOSE_CHANNEL);
 
 	return 0;
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_gd,
-	SHELL_CMD(exec_fallback, NULL, "Execute Fallback Mechanism", cmg_gd_exec_fallback),
-	SHELL_CMD(memory_reset, NULL, "eUICC Memory Reset", cmg_gd_euicc_memory_meset),
-	SHELL_CMD(return_fallback, NULL, "Return From Fallback", cmd_gd_return_from_fallback),
-	SHELL_CMD(set_eim_address, NULL, "Set eIM Address", cmd_gd_set_eim_address),
-	SHELL_CMD(set_timer_value, NULL, "Set Timer Value", cmd_gd_set_timer_value),
-	SHELL_CMD(set_trigger_mechanism, NULL, "Set Trigger Mechanism", cmd_gd_set_trigger),
-	SHELL_CMD(trigger, NULL, "eIM Trigger", cmd_gd_trigger),
+	SHELL_CMD(exec_fallback, NULL, "Gateway Execute Fallback Mechanism", cmg_gd_exec_fallback),
+	SHELL_CMD(memory_reset, NULL, "IPAe eUICC Memory Reset", cmg_gd_euicc_memory_meset),
+	SHELL_CMD(return_fallback, NULL, "Gateway Return From Fallback", cmd_gd_return_from_fallback),
+	SHELL_CMD(set_eim_address, NULL, "Set IPAe eIM Address", cmd_gd_set_eim_address),
+	SHELL_CMD(set_timer_value, NULL, "Set Gateway Timer Value", cmd_gd_set_timer_value),
+	SHELL_CMD(set_trigger_mechanism, NULL, "Set Gateway Trigger Mechanism", cmd_gd_set_trigger),
+	SHELL_CMD(trigger, NULL, "IPAe eIM Trigger", cmd_gd_trigger),
+	SHELL_SUBCMD_SET_END
+);
+
+SHELL_STATIC_SUBCMD_SET_CREATE(sub_tac,
+	SHELL_CMD(trigger, NULL, "TAC Trigger", cmd_tac_trigger),
 	SHELL_SUBCMD_SET_END
 );
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_sgp32,
 	SHELL_CMD(g+d, &sub_gd, "G+D commands", mosh_print_help_shell),
-	SHELL_CMD(tac_trigger, NULL, "TAC trigger", cmd_tac_trigger),
+	SHELL_CMD(notif_list, NULL, "ISD Notifications List", cmd_notifications_list),
+	SHELL_CMD(tac, &sub_tac, "TAC commands", mosh_print_help_shell),
 	SHELL_SUBCMD_SET_END
 );
 

@@ -17,9 +17,9 @@
 #define UICC_OPEN_CHANNEL  "AT+CSIM=10,\"0070000001\""
 #define UICC_CLOSE_CHANNEL "AT+CSIM=8,\"00708001\""
 
-#define UICC_SELECT_IPAE_APPLET    "AT+CSIM=44,\"01A4040010D276000118FB01FF34100089C003080900\""
-#define UICC_SELECT_GATEWAY_APPLET "AT+CSIM=42,\"01A4040010D276000118FB01FF34100089C0031D09\""
-#define UICC_SELECT_ISD_APPLET     "AT+CSIM=44,\"01A4040010A0000005591010FFFFFFFF890000010000\""
+#define UICC_SELECT_IPAE_APPLET    "AT+CSIM=44,\"01A4040C10D276000118FB01FF34100089C003080900\""
+#define UICC_SELECT_GATEWAY_APPLET "AT+CSIM=42,\"01A4040C10D276000118FB01FF34100089C0031D09\""
+#define UICC_SELECT_ISD_APPLET     "AT+CSIM=44,\"01A4040C10A0000005591010FFFFFFFF890000010000\""
 #define UICC_SELECT_TAC_APPLET     "AT+CSIM=40,\"01A4040C0FA00000003053F12816620101654E53\""
 
 static uint8_t response[24 + 256*2 + 1];
@@ -253,6 +253,76 @@ static int cmd_tac_trigger(const struct shell *shell, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_euicc_info1(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD EUICCInfo1Request");
+
+	exec_command(UICC_OPEN_CHANNEL);
+	if (exec_command(UICC_SELECT_ISD_APPLET) == 0) {
+		/* EUICCInfo1 */
+		exec_command("AT+CSIM=18,\"81E2910003BF200000\"");
+	}
+	exec_command(UICC_CLOSE_CHANNEL);
+
+	return 0;
+}
+
+static int cmd_euicc_info2(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD EUICCInfo2Request");
+
+	exec_command(UICC_OPEN_CHANNEL);
+	if (exec_command(UICC_SELECT_ISD_APPLET) == 0) {
+		/* EUICCInfo2 */
+		exec_command("AT+CSIM=18,\"81E2910003BF220000\"");
+	}
+	exec_command(UICC_CLOSE_CHANNEL);
+
+	return 0;
+}
+
+static int cmd_get_certs(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD GetCertsRequestRequest");
+
+	exec_command(UICC_OPEN_CHANNEL);
+	if (exec_command(UICC_SELECT_ISD_APPLET) == 0) {
+		/* GetCertsRequest */
+		exec_command("AT+CSIM=18,\"81E2910003BF560000\"");
+	}
+	exec_command(UICC_CLOSE_CHANNEL);
+
+	return 0;
+}
+
+static int cmd_get_conn_params(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD GetConnectivityParametersRequest");
+
+	exec_command(UICC_OPEN_CHANNEL);
+	if (exec_command(UICC_SELECT_ISD_APPLET) == 0) {
+		/* GetConnectivityParameters */
+		exec_command("AT+CSIM=18,\"81E2910003BF5F0000\"");
+	}
+	exec_command(UICC_CLOSE_CHANNEL);
+
+	return 0;
+}
+
+static int cmd_get_eim_config(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD GetEimConfigurationDataRequest");
+
+	exec_command(UICC_OPEN_CHANNEL);
+	if (exec_command(UICC_SELECT_ISD_APPLET) == 0) {
+		/* GetEIMConfigData */
+		exec_command("AT+CSIM=18,\"81E2910003BF550000\"");
+	}
+	exec_command(UICC_CLOSE_CHANNEL);
+
+	return 0;
+}
+
 static int cmd_notifications_list(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD RetrieveNotificationsListRequest");
@@ -266,6 +336,31 @@ static int cmd_notifications_list(const struct shell *shell, size_t argc, char *
 
 	return 0;
 }
+
+static int cmd_profile_info_list(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD ProfileInfoListRequest");
+
+	exec_command(UICC_OPEN_CHANNEL);
+	if (exec_command(UICC_SELECT_ISD_APPLET) == 0) {
+		/* ProfileInfoListRequest */
+		exec_command("AT+CSIM=18,\"81E2910003BF2D0000\"");
+	}
+	exec_command(UICC_CLOSE_CHANNEL);
+
+	return 0;
+}
+
+SHELL_STATIC_SUBCMD_SET_CREATE(sub_isd,
+	SHELL_CMD(info1, NULL, "EUICCInfo1Request", cmd_euicc_info1),
+	SHELL_CMD(info2, NULL, "EUICCInfo2Request", cmd_euicc_info2),
+	SHELL_CMD(get_certs, NULL, "GetCertsRequest", cmd_get_certs),
+	SHELL_CMD(get_conn_param, NULL, "GetConnectivityParametersRequest", cmd_get_conn_params),
+	SHELL_CMD(get_eim_config, NULL, "GetEimConfigurationDataRequest", cmd_get_eim_config),
+	SHELL_CMD(notif_list, NULL, "RetrieveNotificationsListRequest", cmd_notifications_list),
+	SHELL_CMD(profile_info_list, NULL, "ProfileInfoListRequest", cmd_profile_info_list),
+	SHELL_SUBCMD_SET_END
+);
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_gd,
 	SHELL_CMD(exec_fallback, NULL, "Gateway Execute Fallback Mechanism", cmg_gd_exec_fallback),
@@ -285,8 +380,8 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_tac,
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_sgp32,
 	SHELL_CMD(g+d, &sub_gd, "G+D commands", mosh_print_help_shell),
-	SHELL_CMD(notif_list, NULL, "ISD Notifications List", cmd_notifications_list),
-	SHELL_CMD(tac, &sub_tac, "TAC commands", mosh_print_help_shell),
+	SHELL_CMD(isd, &sub_isd, "ISD (Issuer Security Domain) commands", mosh_print_help_shell),
+	SHELL_CMD(tac, &sub_tac, "Thales commands", mosh_print_help_shell),
 	SHELL_SUBCMD_SET_END
 );
 

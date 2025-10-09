@@ -51,7 +51,7 @@ static int exec_command_ret_sw(const char *command, uint8_t *sw1, uint8_t *sw2)
 static int exec_command(const char *command)
 {
 	uint8_t sw1, sw2;
-	char cmd[64];
+	char cmd[512];
 
 	if (exec_command_ret_sw(command, &sw1, &sw2) != 0) {
 		return -EINVAL;
@@ -71,7 +71,7 @@ static int exec_command(const char *command)
 
 static int exec_applet_command(const char *select_applet, const char *command)
 {
-	char cmd[64];
+	char cmd[512];
 
 	exec_command("AT+CSIM=10,\"0070000001\""); /* Open channel */
 	if (exec_command(select_applet) == 0) {
@@ -274,6 +274,50 @@ static int cmd_profile_info_list(const struct shell *shell, size_t argc, char **
 	return 0;
 }
 
+static int cmd_read_debug_log(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("Kigen Read Debug Log");
+	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910006FF7E03DF330000");
+
+	return 0;
+}
+
+static int cmd_eim_config(const struct shell *shell, size_t argc, char **argv)
+{
+	char eim_config1[] =
+		"81E29100E9BF5781E5A081E23081DF801765696D2D73746167696E672D302E6B6967656E2E636F6D"
+		"820102830100A55BA059301306072A8648CE3D020106082A8648CE3D03010703420004D1716C1592"
+		"4F9C13FCFC246249574833C91DE9787028307F8D7E9C941C21DC4FCD70C8D4F530EF69446AA83E9C"
+		"949BEDB4B4F517A9167B9CAE50192B6289CC45A65BA059301306072A8648CE3D020106082A8648CE"
+		"3D03010703420004552477D4734320982C8E0C545997652F95F5567715D9C23D2AE554A2493F0D2F"
+		"ADB71FEEBD07A2F48AA5FCF0178D07E2A3AA853F9F6976C04B877D25655D44678702";
+	char eim_support[] = "06C0";
+	char eim_config2[] = "8900";
+	char eim_config[sizeof(eim_config1) + sizeof(eim_support) + sizeof(eim_config2)];
+
+	if (argc < 2) {
+		mosh_print("Kigen EIM config HTTP and CoAP", argv[1]);
+	} else if (strcmp(argv[1], "http") == 0) {
+		mosh_print("Kigen EIM config HTTP", argv[1]);
+		sprintf(eim_support, "0780");
+	} else if (strcmp(argv[1], "coap") == 0) {
+		mosh_print("Kigen EIM config CoAP", argv[1]);
+		sprintf(eim_support, "0640");
+	} else {
+		mosh_error("Usage: kigen eim_config <http|coap>");
+		return 0;
+	}
+
+	/* EuiccMemoryResetRequest */
+	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910007BF640482020204");
+
+	/* Select Kigen EIM config */
+	snprintf(eim_config, sizeof(eim_config), "%s%s%s", eim_config1, eim_support, eim_config2);
+	exec_applet_command(UICC_SELECT_ISD_APPLET, eim_config);
+
+	return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_isd,
 	SHELL_CMD(info1, NULL, "EUICCInfo1Request", cmd_euicc_info1),
 	SHELL_CMD(info2, NULL, "EUICCInfo2Request", cmd_euicc_info2),
@@ -282,6 +326,12 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_isd,
 	SHELL_CMD(get_eim_config, NULL, "GetEimConfigurationDataRequest", cmd_get_eim_config),
 	SHELL_CMD(notif_list, NULL, "RetrieveNotificationsListRequest", cmd_notifications_list),
 	SHELL_CMD(profile_info_list, NULL, "ProfileInfoListRequest", cmd_profile_info_list),
+	SHELL_SUBCMD_SET_END
+);
+
+SHELL_STATIC_SUBCMD_SET_CREATE(sub_kigen,
+	SHELL_CMD(eim_config, NULL, "EIM config (HTTP and/or CoAP)", cmd_eim_config),
+	SHELL_CMD(read_debug, NULL, "Read Debug Log", cmd_read_debug_log),
 	SHELL_SUBCMD_SET_END
 );
 
@@ -304,6 +354,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_tac,
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_sgp32,
 	SHELL_CMD(g+d, &sub_gd, "G+D commands", mosh_print_help_shell),
 	SHELL_CMD(isd, &sub_isd, "ISD (Issuer Security Domain) commands", mosh_print_help_shell),
+	SHELL_CMD(kigen, &sub_kigen, "Kigen commands", mosh_print_help_shell),
 	SHELL_CMD(tac, &sub_tac, "Thales commands", mosh_print_help_shell),
 	SHELL_SUBCMD_SET_END
 );

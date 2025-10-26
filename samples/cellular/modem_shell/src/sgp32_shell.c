@@ -218,6 +218,19 @@ static int cmd_tac_trigger(const struct shell *shell, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_isd_command(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD Command");
+	if (argc < 2) {
+		mosh_print("Usage: isd %s <SIM APDU>", argv[0]);
+		return -1;
+	}
+
+	exec_applet_command(UICC_SELECT_ISD_APPLET, argv[1]);
+
+	return 0;
+}
+
 static int cmd_euicc_info1(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD EUICCInfo1Request");
@@ -254,6 +267,14 @@ static int cmd_get_eim_config(const struct shell *shell, size_t argc, char **arg
 {
 	mosh_print("ISD GetEimConfigurationDataRequest");
 	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF550000");
+
+	return 0;
+}
+
+static int cmd_get_rat(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD GetRatRequest");
+	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF430000");
 
 	return 0;
 }
@@ -319,11 +340,13 @@ static int cmd_eim_config(const struct shell *shell, size_t argc, char **argv)
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_isd,
+	SHELL_CMD(command, NULL, "ISD command", cmd_isd_command),
 	SHELL_CMD(info1, NULL, "EUICCInfo1Request", cmd_euicc_info1),
 	SHELL_CMD(info2, NULL, "EUICCInfo2Request", cmd_euicc_info2),
 	SHELL_CMD(get_certs, NULL, "GetCertsRequest", cmd_get_certs),
 	SHELL_CMD(get_conn_param, NULL, "GetConnectivityParametersRequest", cmd_get_conn_params),
 	SHELL_CMD(get_eim_config, NULL, "GetEimConfigurationDataRequest", cmd_get_eim_config),
+	SHELL_CMD(get_rat, NULL, "GetRatRequest", cmd_get_rat),
 	SHELL_CMD(notif_list, NULL, "RetrieveNotificationsListRequest", cmd_notifications_list),
 	SHELL_CMD(profile_info_list, NULL, "ProfileInfoListRequest", cmd_profile_info_list),
 	SHELL_SUBCMD_SET_END

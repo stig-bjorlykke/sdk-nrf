@@ -17,7 +17,7 @@
 #define UICC_SELECT_IPAE_APPLET    "AT+CSIM=44,\"01A4040C10D276000118FB01FF34100089C003080900\""
 #define UICC_SELECT_GATEWAY_APPLET "AT+CSIM=42,\"01A4040C10D276000118FB01FF34100089C0031D09\""
 #define UICC_SELECT_ISD_APPLET     "AT+CSIM=44,\"01A4040C10A0000005591010FFFFFFFF890000010000\""
-#define UICC_SELECT_TAC_APPLET     "AT+CSIM=40,\"01A4040C0FA00000003053F12816620101654E53\""
+#define UICC_SELECT_TAC_APPLET     "AT+CSIM=36,\"01A404000DA00000084455F1279166010101\""
 
 static uint8_t response[24 + 256*2 + 1];
 
@@ -212,8 +212,8 @@ static int cmd_gd_return_from_fallback(const struct shell *shell, size_t argc, c
 static int cmd_tac_trigger(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("TAC poll triggered");
-	exec_applet_command(UICC_SELECT_TAC_APPLET, "8100000003400101");
-	exec_command("AT+CSIM=10,\"80F2000000\""); /* STATUS command */
+	exec_applet_command(UICC_SELECT_TAC_APPLET, "0100000003400101");
+	exec_command("AT+CSIM=8,\"80F2000C\""); /* STATUS command */
 
 	return 0;
 }

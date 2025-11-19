@@ -129,23 +129,27 @@ static int cmd_gd_set_eim_address(const struct shell *shell, size_t argc, char *
 static int cmd_gd_set_trigger(const struct shell *shell, size_t argc, char **argv)
 {
 	if (argc < 2) {
-		mosh_print("Usage: gd %s <trigger_mechanism>", argv[0]);
+		mosh_print("Usage: g+d %s <trigger_mechanism>", argv[0]);
 		mosh_print(" 0 - none");
 		mosh_print(" 1 - timer");
 		mosh_print(" 2 - reset");
+		mosh_print(" 3 - timer + reset");
+		mosh_print(" 4 - mcc/mnc");
+		mosh_print(" 5 - timer + mcc/mnc");
+		mosh_print(" 6 - reset + mcc/mnc");
+		mosh_print(" 7 - timer + reset + mcc/mnc");
 		return -EINVAL;
 	}
 
 	uint32_t trigger = atol(argv[1]);
 	char cmd[64];
 
-	if (trigger > 2) {
-		mosh_error("Invalid trigger value: %s, must be between 0 and 2", argv[1]);
+	if (trigger > 7) {
+		mosh_error("Invalid trigger value: %s, must be between 0 and 7", argv[1]);
 		return -EINVAL;
 	}
 
-	mosh_print("Set G+D Gateway trigger mechanism to %s",
-		   trigger == 0 ? "none" : (trigger == 1 ? "timer" : "reset"));
+	mosh_print("Set G+D Gateway trigger mechanism to %u (0x%02X)", trigger, trigger);
 	snprintf(cmd, sizeof(cmd), "81E29100049F0201%02X00", trigger);
 	exec_applet_command(UICC_SELECT_GATEWAY_APPLET, cmd);
 
@@ -155,7 +159,7 @@ static int cmd_gd_set_trigger(const struct shell *shell, size_t argc, char **arg
 static int cmd_gd_set_timer_value(const struct shell *shell, size_t argc, char **argv)
 {
 	if (argc < 2) {
-		mosh_print("Usage: gd %s <hours> <minutes>", argv[0]);
+		mosh_print("Usage: g+d %s <hours> <minutes>", argv[0]);
 		return -EINVAL;
 	}
 

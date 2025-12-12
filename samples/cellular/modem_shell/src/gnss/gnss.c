@@ -48,6 +48,10 @@
 #include "str_utils.h"
 #include "gnss.h"
 
+#if defined(CONFIG_NTN)
+#include <modem/ntn.h>
+#endif /* CONFIG_NTN */
+
 #if (defined(CONFIG_NRF_CLOUD_AGNSS) || defined(CONFIG_NRF_CLOUD_PGPS)) && \
 	defined(CONFIG_SUPL_CLIENT_LIB)
 BUILD_ASSERT(false, "nRF Cloud assistance and SUPL library cannot be enabled at the same time");
@@ -381,15 +385,22 @@ static void data_handler_thread_fn(void)
 {
 	struct event_item event;
 	struct nrf_modem_gnss_agnss_data_frame *agnss_data_frame;
+	struct nrf_modem_gnss_pvt_data_frame *pvt;
 
 	while (true) {
 		k_msgq_get(&gnss_event_msgq, &event, K_FOREVER);
 
 		switch (event.id) {
 		case NRF_MODEM_GNSS_EVT_PVT:
-			print_pvt((struct nrf_modem_gnss_pvt_data_frame *)event.data);
+			pvt = (struct nrf_modem_gnss_pvt_data_frame *)event.data;
+			print_pvt(pvt);
 #if defined(CONFIG_LWM2M_CARRIER)
-			gnss_carrier_location((struct nrf_modem_gnss_pvt_data_frame *)event.data);
+			gnss_carrier_location(pvt);
+#endif
+#if defined(CONFIG_NTN)
+			if (pvt->flags & NRF_MODEM_GNSS_PVT_FLAG_FIX_VALID) {
+				ntn_location_set(pvt->latitude, pvt->longitude, pvt->altitude, 0);
+			}
 #endif
 			break;
 

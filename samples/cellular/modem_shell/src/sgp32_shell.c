@@ -83,6 +83,28 @@ static int exec_applet_command(const char *select_applet, const char *command)
 	return 0;
 }
 
+static int exec_isd_ipad_command(const char *command)
+{
+	char cmd[512];
+
+	exec_command("AT+CSIM=10,\"0070000001\""); /* Open channel */
+
+	/* TERMINAL CAPABILITY with IPAd */
+	exec_command("AT+CSIM=24,\"81AA000007A9058100840101\"");
+
+	if (exec_command(UICC_SELECT_ISD_APPLET) == 0) {
+		snprintf(cmd, sizeof(cmd), "AT+CSIM=%d,\"%s\"", strlen(command), command);
+		exec_command(cmd);
+	}
+
+	/* IPAe activate */
+	exec_command("AT+CSIM=26,\"81E2910007BF42048002078000\"");
+
+	exec_command("AT+CSIM=8,\"00708001\""); /* Close channel */
+
+	return 0;
+}
+
 static int cmd_gd_trigger(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("G+D eIM trigger");
@@ -277,7 +299,7 @@ static int cmd_isd_command(const struct shell *shell, size_t argc, char **argv)
 		return -1;
 	}
 
-	exec_applet_command(UICC_SELECT_ISD_APPLET, argv[1]);
+	exec_isd_ipad_command(argv[1]);
 
 	return 0;
 }
@@ -285,7 +307,7 @@ static int cmd_isd_command(const struct shell *shell, size_t argc, char **argv)
 static int cmd_euicc_info1(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD EUICCInfo1Request");
-	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF200000");
+	exec_isd_ipad_command("81E2910003BF200000");
 
 	return 0;
 }
@@ -293,7 +315,7 @@ static int cmd_euicc_info1(const struct shell *shell, size_t argc, char **argv)
 static int cmd_euicc_info2(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD EUICCInfo2Request");
-	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF220000");
+	exec_isd_ipad_command("81E2910003BF220000");
 
 	return 0;
 }
@@ -301,7 +323,7 @@ static int cmd_euicc_info2(const struct shell *shell, size_t argc, char **argv)
 static int cmd_get_certs(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD GetCertsRequest");
-	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF560000");
+	exec_isd_ipad_command("81E2910003BF560000");
 
 	return 0;
 }
@@ -309,7 +331,7 @@ static int cmd_get_certs(const struct shell *shell, size_t argc, char **argv)
 static int cmd_get_conn_params(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD GetConnectivityParametersRequest");
-	exec_applet_command(UICC_SELECT_ISD_APPLET,"81E2910003BF5F0000");
+	exec_isd_ipad_command("81E2910003BF5F0000");
 
 	return 0;
 }
@@ -317,7 +339,7 @@ static int cmd_get_conn_params(const struct shell *shell, size_t argc, char **ar
 static int cmd_get_eim_config(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD GetEimConfigurationDataRequest");
-	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF550000");
+	exec_isd_ipad_command("81E2910003BF550000");
 
 	return 0;
 }
@@ -325,7 +347,7 @@ static int cmd_get_eim_config(const struct shell *shell, size_t argc, char **arg
 static int cmd_get_rat(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD GetRatRequest");
-	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF430000");
+	exec_isd_ipad_command("81E2910003BF430000");
 
 	return 0;
 }
@@ -333,7 +355,7 @@ static int cmd_get_rat(const struct shell *shell, size_t argc, char **argv)
 static int cmd_notifications_list(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD RetrieveNotificationsListRequest");
-	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF2B0000");
+	exec_isd_ipad_command("81E2910003BF2B0000");
 
 	return 0;
 }
@@ -341,7 +363,15 @@ static int cmd_notifications_list(const struct shell *shell, size_t argc, char *
 static int cmd_profile_info_list(const struct shell *shell, size_t argc, char **argv)
 {
 	mosh_print("ISD ProfileInfoListRequest");
-	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910003BF2D0000");
+	exec_isd_ipad_command("81E2910003BF2D0000");
+
+	return 0;
+}
+
+static int cmd_ipae_activate(const struct shell *shell, size_t argc, char **argv)
+{
+	mosh_print("ISD IPAe activate");
+	exec_applet_command(UICC_SELECT_ISD_APPLET, "81E2910007BF42048002078000");
 
 	return 0;
 }
@@ -394,6 +424,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_isd,
 	SHELL_CMD(command, NULL, "ISD command", cmd_isd_command),
 	SHELL_CMD(info1, NULL, "EUICCInfo1Request", cmd_euicc_info1),
 	SHELL_CMD(info2, NULL, "EUICCInfo2Request", cmd_euicc_info2),
+	SHELL_CMD(ipae_activate, NULL, "IPAe activate", cmd_ipae_activate),
 	SHELL_CMD(get_certs, NULL, "GetCertsRequest", cmd_get_certs),
 	SHELL_CMD(get_conn_param, NULL, "GetConnectivityParametersRequest", cmd_get_conn_params),
 	SHELL_CMD(get_eim_config, NULL, "GetEimConfigurationDataRequest", cmd_get_eim_config),

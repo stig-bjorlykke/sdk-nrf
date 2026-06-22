@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 #include <nrf_modem_at.h>
 
 #include "mosh_defines.h"

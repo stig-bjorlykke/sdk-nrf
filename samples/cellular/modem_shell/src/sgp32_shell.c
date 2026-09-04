@@ -166,16 +166,18 @@ static char gd_eim_config[2][4][512] = {
 	}
 };
 
-static int cmg_gd_eim_config(const struct shell *shell, size_t argc, char **argv)
+static int cmd_gd_set_eim_config(const struct shell *shell, size_t argc, char **argv)
 {
-	int config = 0;
+	if (argc < 2) {
+		mosh_error("Usage: %s <1|2>", argv[0]);
+		return -EINVAL;
+	}
 
-	if (argc >= 2) {
-		config = atoi(argv[1]);
-		if (config < 1 || config > 2) {
-			mosh_error("Invalid config: %s, must be 1 or 2", argv[1]);
-			return -EINVAL;
-		}
+	uint32_t config = atol(argv[1]);
+
+	if (config < 1 || config > 2) {
+		mosh_error("Invalid config: %s, must be 1 or 2", argv[1]);
+		return -EINVAL;
 	}
 
 	mosh_print("G+D IPAe eIM config %u", config);
@@ -386,7 +388,39 @@ static int cmd_kigen_read_debug_log(const struct shell *shell, size_t argc, char
 	return 0;
 }
 
-static int cmd_kigen_eim_config(const struct shell *shell, size_t argc, char **argv)
+static int cmd_kigen_set_polling_interval(const struct shell *shell, size_t argc, char **argv)
+{
+	if (argc < 3) {
+		mosh_error("Usage: kigen %s <units> <count>", argv[0]);
+		mosh_error(" units: 1 = minutes, 2 = hours, 3 = days");
+		mosh_error(" count: 1-255");
+		return 0;
+	}
+
+	uint32_t units = atol(argv[1]);
+	uint32_t count = atol(argv[2]);
+
+	if (units < 1 || units > 3) {
+		mosh_error("Invalid units: %s, must be between 1 and 3", argv[1]);
+		return -EINVAL;
+	}
+
+	if (count < 1 || count > 255) {
+		mosh_error("Invalid count: %s, must be between 1 and 255", argv[2]);
+		return -EINVAL;
+	}
+
+	char cmd[64];
+	char *count_str[] = { [1] = "minutes", [2] = "hours", [3] = "days" };
+
+	mosh_print("Kigen Set Polling Interval:  %u %s", units, count_str[units]);
+	snprintf(cmd, sizeof(cmd), "80E2910008FF7E05DF34020205%02X%02X", units, count);
+	exec_applet_command(UICC_SELECT_ISD_APPLET, cmd);
+
+	return 0;
+}
+
+static int cmd_kigen_set_eim_config(const struct shell *shell, size_t argc, char **argv)
 {
 	char eim_config1[] =
 		"81E29100E9BF5781E5A081E23081DF801765696D2D73746167696E672D302E6B6967656E2E636F6D"
@@ -400,15 +434,15 @@ static int cmd_kigen_eim_config(const struct shell *shell, size_t argc, char **a
 	char eim_config[sizeof(eim_config1) + sizeof(eim_support) + sizeof(eim_config2)];
 
 	if (argc < 2) {
-		mosh_print("Kigen EIM config HTTP and CoAP", argv[1]);
+		mosh_print("Kigen EIM config HTTP and CoAP");
 	} else if (strcmp(argv[1], "http") == 0) {
-		mosh_print("Kigen EIM config HTTP", argv[1]);
+		mosh_print("Kigen EIM config HTTP");
 		sprintf(eim_support, "0780");
 	} else if (strcmp(argv[1], "coap") == 0) {
-		mosh_print("Kigen EIM config CoAP", argv[1]);
+		mosh_print("Kigen EIM config CoAP");
 		sprintf(eim_support, "0640");
 	} else {
-		mosh_error("Usage: kigen eim_config <http|coap>");
+		mosh_error("Usage: kigen %s <http|coap>", argv[0]);
 		return 0;
 	}
 
@@ -437,17 +471,18 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_isd,
 );
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_kigen,
-	SHELL_CMD(eim_config, NULL, "eIM config (HTTP and/or CoAP)", cmd_kigen_eim_config),
 	SHELL_CMD(read_debug, NULL, "Read Debug Log", cmd_kigen_read_debug_log),
+	SHELL_CMD(set_eim_config, NULL, "Set eIM Config (HTTP and/or CoAP)", cmd_kigen_set_eim_config),
+	SHELL_CMD(set_polling_interval, NULL, "Set Polling Interval", cmd_kigen_set_polling_interval),
 	SHELL_SUBCMD_SET_END
 );
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_gd,
-	SHELL_CMD(eim_config, NULL, "eIM Config", cmg_gd_eim_config),
 	SHELL_CMD(exec_fallback, NULL, "Gateway Execute Fallback Mechanism", cmg_gd_exec_fallback),
 	SHELL_CMD(memory_reset, NULL, "IPAe eUICC Memory Reset", cmg_gd_euicc_memory_meset),
 	SHELL_CMD(return_fallback, NULL, "Gateway Return From Fallback", cmd_gd_return_from_fallback),
 	SHELL_CMD(set_eim_address, NULL, "Set IPAe eIM Address", cmd_gd_set_eim_address),
+	SHELL_CMD(set_eim_config, NULL, "Set eIM Config", cmd_gd_set_eim_config),
 	SHELL_CMD(set_timer_value, NULL, "Set Gateway Timer Value", cmd_gd_set_timer_value),
 	SHELL_CMD(set_trigger_mechanism, NULL, "Set Gateway Trigger Mechanism", cmd_gd_set_trigger),
 	SHELL_CMD(trigger, NULL, "IPAe eIM Trigger", cmd_gd_trigger),
